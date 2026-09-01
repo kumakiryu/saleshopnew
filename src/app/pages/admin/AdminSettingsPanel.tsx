@@ -96,7 +96,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
     try {
       const data = await apiCall({ action: 'setup' });
       const dataUrl = await QRCode.toDataURL(data.uri as string, {
-        width: 220, margin: 2, color: { dark: '#c8d0f0', light: '#050816' },
+        width: 240, margin: 2,
       });
       setQrDataUrl(dataUrl);
       setSecretKey(data.secret as string);
@@ -222,19 +222,30 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
               {setupStep === 'qr' && (
                 <div className="flex flex-col items-center gap-4">
                   <p className="text-xs text-center" style={{ color: '#7b88c0' }}>
-                    Scan this QR code with your authenticator app, then enter the 6-digit code to confirm.
+                    Scan with Google Authenticator, Authy, or any TOTP app. <strong style={{ color: '#ffffff' }}>Do not click "I've Scanned" until the app shows a 6-digit code.</strong>
                   </p>
                   {qrDataUrl && (
-                    <img src={qrDataUrl} alt="TOTP QR Code" className="rounded-xl" style={{ width: 200, height: 200, imageRendering: 'pixelated' }} />
+                    <div className="rounded-xl p-3" style={{ background: '#ffffff' }}>
+                      <img src={qrDataUrl} alt="TOTP QR Code" style={{ width: 200, height: 200, display: 'block' }} />
+                    </div>
                   )}
-                  <div className="w-full px-3 py-2.5 rounded-lg text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                    <p className="text-[9px] uppercase tracking-widest mb-1" style={{ color: '#2e3a5a' }}>Manual entry key</p>
-                    <p className="text-xs font-mono font-bold" style={{ color: '#7b88c0', letterSpacing: '0.15em' }}>{secretKey}</p>
+                  <div className="w-full rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,191,255,0.25)', background: 'rgba(0,191,255,0.05)' }}>
+                    <p className="text-[9px] uppercase tracking-widest px-3 pt-2.5 pb-1" style={{ color: '#3a4570' }}>
+                      Can't scan? Add manually in your app
+                    </p>
+                    <div className="flex items-center gap-2 px-3 pb-3">
+                      <p className="text-sm font-mono font-bold flex-1 break-all" style={{ color: '#00BFFF', letterSpacing: '0.1em' }}>{secretKey}</p>
+                      <button onClick={() => navigator.clipboard.writeText(secretKey)}
+                        className="text-[10px] px-2 py-1 rounded-lg flex-shrink-0 font-bold"
+                        style={{ background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.25)', color: '#00BFFF', cursor: 'pointer' }}>
+                        Copy
+                      </button>
+                    </div>
                   </div>
                   <button onClick={() => setSetupStep('confirm')}
                     className="w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide"
                     style={{ background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.3)', color: '#00BFFF', cursor: 'pointer', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
-                    I've Scanned the Code →
+                    I've Added It — Enter Code →
                   </button>
                 </div>
               )}
