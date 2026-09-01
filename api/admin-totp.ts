@@ -112,7 +112,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (action === 'verify-setup') {
       const { data: row } = await svc.from('admin_totp_secrets').select('secret').eq('admin_id', user.id).single();
       if (!row) return res.status(400).json({ error: 'Run setup first' });
-      if (!verifyTotp(code!, row.secret)) return res.status(400).json({ error: 'Invalid code — check your authenticator app' });
+      const t = Math.floor(Date.now() / 1000 / 30);
+const expected = [t - 2, t - 1, t, t + 1, t + 2].map(w => hotp(row.secret, w));
+if (!expected.includes(code!)) return res.status(400).json({ error: `Invalid code. Server time window: ${t}. Expected codes: ${expected.join(', ')}` });
 
       await svc.from('admin_totp_secrets').update({ enabled: true }).eq('admin_id', user.id);
       await svc.from('admins').update({ totp_enabled: true }).eq('id', user.id);
