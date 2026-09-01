@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { authenticator } from 'otplib';
-import QRCode from 'qrcode';
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://hxfccpadsbunynignbwn.supabase.co';
@@ -57,11 +56,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (action === 'setup') {
     const secret = authenticator.generateSecret(20);
     const uri = authenticator.keyuri(user.email ?? 'admin', APP_NAME, secret);
-    const qrDataUrl = await QRCode.toDataURL(uri, { width: 220, margin: 2, color: { dark: '#c8d0f0', light: '#050816' } });
 
     await svc.from('admin_totp_secrets').upsert({ admin_id: user.id, secret, enabled: false }, { onConflict: 'admin_id' });
 
-    return res.status(200).json({ qrDataUrl, secret });
+    return res.status(200).json({ uri, secret });
   }
 
   // ── verify-setup: confirm code and enable 2FA ────────────────────
