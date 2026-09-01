@@ -39,7 +39,7 @@ function hotp(secret: string, counter: number): string {
 
 function verifyTotp(token: string, secret: string): boolean {
   const t = Math.floor(Date.now() / 1000 / 30);
-  return [t - 1, t, t + 1].some(w => hotp(secret, w) === token);
+return [t - 2, t - 1, t, t + 1, t + 2].some(w => hotp(secret, w) === token);
 }
 
 function totpUri(email: string, secret: string): string {
