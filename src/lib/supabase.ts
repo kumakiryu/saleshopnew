@@ -15,128 +15,123 @@ function authHeaders(extra?: Record<string, string>) {
 
 // ── Query builder ─────────────────────────────────────────────────────────────
 
-type Order = { column: string; ascending: boolean };
+type Op = 'select' | 'insert' | 'update' | 'upsert' | 'delete';
 
 class QueryBuilder {
   private _table: string;
-  private _select = '*';
+  private _cols = '*';
   private _filters: string[] = [];
-  private _order: Order | null = null;
-  private _limit: number | null = null;
+  private _orderCol = '';
+  private _orderAsc = true;
+  private _limitN: number | null = null;
   private _single = false;
   private _maybeSingle = false;
+  private _op: Op = 'select';
+  private _body: unknown = null;
+  private _upsertConflict?: string;
 
   constructor(table: string) { this._table = table; }
 
-  select(cols = '*') { this._select = cols; return this; }
+  // ── filter helpers ──────────────────────────────────────────────────────────
   eq(col: string, val: unknown) { this._filters.push(`${col}=eq.${val}`); return this; }
   neq(col: string, val: unknown) { this._filters.push(`${col}=neq.${val}`); return this; }
   in(col: string, vals: unknown[]) { this._filters.push(`${col}=in.(${vals.join(',')})`); return this; }
   order(col: string, opts?: { ascending?: boolean }) {
-    this._order = { column: col, ascending: opts?.ascending ?? true }; return this;
+    this._orderCol = col; this._orderAsc = opts?.ascending ?? true; return this;
   }
-  limit(n: number) { this._limit = n; return this; }
+  limit(n: number) { this._limitN = n; return this; }
+
+  // ── terminal markers ────────────────────────────────────────────────────────
   single() { this._single = true; return this; }
   maybeSingle() { this._maybeSingle = true; return this; }
 
-  private _buildUrl(method: string) {
-    const qs = new URLSearchParams({ select: this._select });
-    this._filters.forEach(f => { const [k, v] = f.split('='); qs.append(k, v); });
-    if (this._order) qs.append('order', `${this._order.column}.${this._order.ascending ? 'asc' : 'desc'}`);
-    if (this._limit) qs.append('limit', String(this._limit));
-    return `${BASE}/rest/v1/${this._table}?${qs}`;
+  // ── operations (all return `this` for chaining) ─────────────────────────────
+  select(cols = '*') {
+    if (this._op === 'select') this._cols = cols;
+    // if called after insert/update/upsert: no-op, just enables row return
+    return this;
   }
 
-  async then(resolve: (v: any) => void, reject?: (e: any) => void) {
-    try {
-      const res = await fetch(this._buildUrl('GET'), { headers: authHeaders({ 'Prefer': 'return=representation' }) });
-      const json = await res.json();
-      if (!res.ok) { resolve({ data: null, error: json }); return; }
-      if (this._single) {
-        if (!Array.isArray(json) || json.length === 0) resolve({ data: null, error: { message: 'No rows' } });
-        else resolve({ data: json[0], error: null });
-      } else if (this._maybeSingle) {
-        resolve({ data: Array.isArray(json) ? (json[0] ?? null) : null, error: null });
-      } else {
-        resolve({ data: json, error: null });
+  insert(data: unknown) { this._op = 'insert'; this._body = data; return this; }
+  update(data: unknown) { this._op = 'update'; this._body = data; return this; }
+
+  upsert(data: unknown, opts?: { onConflict?: string }) {
+    this._op = 'upsert'; this._body = data; this._upsertConflict = opts?.onConflict; return this;
+  }
+
+  delete() { this._op = 'delete'; return this; }
+
+  // ── filter querystring builder ──────────────────────────────────────────────
+  private _filterQS() {
+    const qs = new URLSearchParams();
+    for (const f of this._filters) {
+      const i = f.indexOf('=');
+      qs.append(f.slice(0, i), f.slice(i + 1));
+    }
+    return qs;
+  }
+
+  // ── awaitable ───────────────────────────────────────────────────────────────
+  then(resolve: (v: any) => void, reject?: (e: any) => void) {
+    const run = async () => {
+      try {
+        let res: Response;
+
+        if (this._op === 'select') {
+          const qs = this._filterQS();
+          qs.set('select', this._cols);
+          if (this._orderCol) qs.set('order', `${this._orderCol}.${this._orderAsc ? 'asc' : 'desc'}`);
+          if (this._limitN) qs.set('limit', String(this._limitN));
+          res = await fetch(`${BASE}/rest/v1/${this._table}?${qs}`, { headers: authHeaders() });
+
+        } else if (this._op === 'insert') {
+          res = await fetch(`${BASE}/rest/v1/${this._table}`, {
+            method: 'POST',
+            headers: authHeaders({ 'Prefer': 'return=representation' }),
+            body: JSON.stringify(this._body),
+          });
+
+        } else if (this._op === 'upsert') {
+          const prefer = `return=representation,resolution=merge-duplicates${this._upsertConflict ? `,on_conflict=${this._upsertConflict}` : ''}`;
+          res = await fetch(`${BASE}/rest/v1/${this._table}`, {
+            method: 'POST',
+            headers: authHeaders({ 'Prefer': prefer }),
+            body: JSON.stringify(this._body),
+          });
+
+        } else if (this._op === 'update') {
+          const qs = this._filterQS();
+          res = await fetch(`${BASE}/rest/v1/${this._table}?${qs}`, {
+            method: 'PATCH',
+            headers: authHeaders({ 'Prefer': 'return=representation' }),
+            body: JSON.stringify(this._body),
+          });
+
+        } else { // delete
+          const qs = this._filterQS();
+          res = await fetch(`${BASE}/rest/v1/${this._table}?${qs}`, {
+            method: 'DELETE',
+            headers: authHeaders({ 'Prefer': 'return=representation' }),
+          });
+        }
+
+        const json = await res.json().catch(() => null);
+        if (!res.ok) { resolve({ data: null, error: json }); return; }
+
+        if (this._single) {
+          const row = Array.isArray(json) ? (json[0] ?? null) : (json ?? null);
+          resolve(row ? { data: row, error: null } : { data: null, error: { message: 'No rows found' } });
+        } else if (this._maybeSingle) {
+          resolve({ data: Array.isArray(json) ? (json[0] ?? null) : (json ?? null), error: null });
+        } else {
+          resolve({ data: json ?? [], error: null });
+        }
+      } catch (e) {
+        resolve({ data: null, error: e });
       }
-    } catch (e) { resolve({ data: null, error: e }); }
+    };
+    run().then(undefined, reject);
   }
-
-  async insert(data: object | object[]) {
-    const res = await fetch(`${BASE}/rest/v1/${this._table}`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(data),
-    });
-    const json = await res.json().catch(() => null);
-    if (!res.ok) return { data: null, error: json };
-    const rows = Array.isArray(json) ? json : [json];
-    return { data: Array.isArray(data) ? rows : rows[0] ?? null, error: null };
-  }
-
-  async upsert(data: object | object[], opts?: { onConflict?: string }) {
-    const prefer = `resolution=merge-duplicates${opts?.onConflict ? `,on_conflict=${opts.onConflict}` : ''}`;
-    const res = await fetch(`${BASE}/rest/v1/${this._table}`, {
-      method: 'POST',
-      headers: authHeaders({ 'Prefer': `return=representation,${prefer}` }),
-      body: JSON.stringify(data),
-    });
-    const json = await res.json().catch(() => null);
-    if (!res.ok) return { data: null, error: json };
-    return { data: json, error: null };
-  }
-
-  async update(data: object) {
-    const qs = new URLSearchParams();
-    this._filters.forEach(f => { const [k, v] = f.split('='); qs.append(k, v); });
-    const res = await fetch(`${BASE}/rest/v1/${this._table}?${qs}`, {
-      method: 'PATCH',
-      headers: authHeaders(),
-      body: JSON.stringify(data),
-    });
-    const json = await res.json().catch(() => null);
-    if (!res.ok) return { data: null, error: json };
-    return { data: json, error: null };
-  }
-
-  async delete() {
-    const qs = new URLSearchParams();
-    this._filters.forEach(f => { const [k, v] = f.split('='); qs.append(k, v); });
-    const res = await fetch(`${BASE}/rest/v1/${this._table}?${qs}`, {
-      method: 'DELETE',
-      headers: authHeaders({ 'Prefer': 'return=representation' }),
-    });
-    const json = await res.json().catch(() => null);
-    if (!res.ok) return { data: null, error: json };
-    return { data: json, error: null };
-  }
-
-  on(_event: string, _filter: string, _cb: (payload: any) => void) {
-    return { subscribe: () => ({ unsubscribe: () => {} }) };
-  }
-}
-
-// ── Realtime stub ─────────────────────────────────────────────────────────────
-
-class RealtimeChannel {
-  private _table = '';
-  private _cb: ((p: any) => void) | null = null;
-  private _eventSource: EventSource | null = null;
-
-  on(_event: string, opts: { event: string; schema?: string; table?: string; filter?: string }, cb: (p: any) => void) {
-    this._table = opts.table ?? '';
-    this._cb = cb;
-    return this;
-  }
-
-  subscribe() {
-    if (!this._table || !this._cb) return this;
-    const url = `${BASE}/realtime/v1/api/broadcast?apikey=${publicAnonKey}`;
-    return this;
-  }
-
-  unsubscribe() { this._eventSource?.close(); }
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -168,10 +163,11 @@ const auth = {
   getUser: async () => {
     loadPersistedSession();
     if (!_session) return { data: { user: null }, error: null };
-    const res = await fetch(`${BASE}/auth/v1/user`, { headers: authHeaders() });
-    if (!res.ok) return { data: { user: null }, error: await res.json() };
-    const user = await res.json();
-    return { data: { user }, error: null };
+    try {
+      const res = await fetch(`${BASE}/auth/v1/user`, { headers: authHeaders() });
+      if (!res.ok) { persistSession(null); return { data: { user: null }, error: null }; }
+      return { data: { user: await res.json() }, error: null };
+    } catch { return { data: { user: null }, error: null }; }
   },
 
   signInWithPassword: async ({ email, password }: { email: string; password: string }) => {
@@ -199,7 +195,16 @@ const auth = {
     loadPersistedSession();
     _listeners.push(cb);
     setTimeout(() => cb(_session ? 'SIGNED_IN' : 'SIGNED_OUT', _session), 0);
-    return { data: { subscription: { unsubscribe: () => { const i = _listeners.indexOf(cb); if (i >= 0) _listeners.splice(i, 1); } } } };
+    return {
+      data: {
+        subscription: {
+          unsubscribe: () => {
+            const i = _listeners.indexOf(cb);
+            if (i >= 0) _listeners.splice(i, 1);
+          },
+        },
+      },
+    };
   },
 
   admin: {
@@ -229,7 +234,13 @@ const storage = {
   }),
 };
 
-// ── Channel ───────────────────────────────────────────────────────────────────
+// ── Realtime (stub — real-time not needed for shop preview) ───────────────────
+
+class RealtimeChannel {
+  on(_ev: string, _opts: any, _cb: any) { return this; }
+  subscribe() { return this; }
+  unsubscribe() {}
+}
 
 function channel(_name: string) { return new RealtimeChannel(); }
 function removeChannel(_ch: any) {}
