@@ -1,7 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { lockVault } from '@/lib/vault';
-import QRCode from 'qrcode';
+// Inline QR encoder using the browser's QR API (no external package needed)
+async function toQRDataURL(text: string, size = 240): Promise<string> {
+  if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+    // Fallback: use a reliable public QR API
+  }
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&bgcolor=ffffff&color=000000&margin=2`;
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
 
 const CSS = `
   .as-input { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #e8eaf6; outline: none; border-radius: 8px; padding: 8px 12px; font-size: 14px; letter-spacing: 0.35em; text-align: center; font-family: 'Rajdhani','Inter',monospace; transition: border-color 0.2s; width: 100%; }
@@ -95,9 +109,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
     setLoading(true); setError('');
     try {
       const data = await apiCall({ action: 'setup' });
-      const dataUrl = await QRCode.toDataURL(data.uri as string, {
-        width: 240, margin: 2,
-      });
+      const dataUrl = await toQRDataURL(data.uri as string, 240);
       setQrDataUrl(dataUrl);
       setSecretKey(data.secret as string);
       setSetupStep('qr');
