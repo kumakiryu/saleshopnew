@@ -43,6 +43,34 @@ function MaintenancePage() {
           <span style={{ fontSize: 13, color: '#7b88c0' }}>Maintenance in progress</span>
         </div>
 
+        {/* Redirect to backup shop */}
+        <div style={{ marginTop: 28 }}>
+          <p style={{ margin: '0 0 12px', fontSize: 13, color: '#3a4570' }}>
+            In the meantime, visit our other shop:
+          </p>
+          <a
+            href="https://trustsaleshop.xyz/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '12px 24px', borderRadius: 10,
+              background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.25)',
+              color: '#00BFFF', fontSize: 14, fontWeight: 700, textDecoration: 'none',
+              letterSpacing: '0.03em', transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,191,255,0.16)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,191,255,0.08)')}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            trustsaleshop.xyz
+          </a>
+        </div>
+
         <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
       </div>
     </div>
