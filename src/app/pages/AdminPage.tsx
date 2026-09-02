@@ -672,27 +672,21 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
 
     const vaultPoll = setInterval(() => setVaultOpen(isVaultUnlocked()), 10_000);
 
-    supabase.from('products').select('*').order('category').then(({ data }) => {
-      if (data) setProducts(data);
-      setLoading(false);
-    });
-    supabase.from('orders').select('*').order('created_at', { ascending: false }).then(({ data }) => {
-      if (data) setOrders(data);
-    });
+    function refreshData() {
+      supabase.from('products').select('*').order('category').then(({ data }) => {
+        if (data) setProducts(data);
+        setLoading(false);
+      });
+      supabase.from('orders').select('*').order('created_at', { ascending: false }).then(({ data }) => {
+        if (data) setOrders(data);
+      });
+    }
 
-    const ch = supabase
-      .channel('products-admin')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-        if (payload.eventType === 'DELETE') removeProduct((payload.old as { id: string }).id);
-        else upsertProduct(payload.new as Product);
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
-        if (payload.eventType === 'DELETE') removeOrder((payload.old as { id: string }).id);
-        else upsertOrder(payload.new as import('@/lib/types').Order);
-      })
-      .subscribe();
+    refreshData();
+    // Poll every 8 seconds so new orders appear without a manual refresh
+    const dataPoll = setInterval(refreshData, 8_000);
 
-    return () => { supabase.removeChannel(ch); clearInterval(vaultPoll); };
+    return () => { clearInterval(vaultPoll); clearInterval(dataPoll); };
   }, []);
 
   // Refresh vault state when switching tabs (e.g. user unlocked vault in codes tab, now viewing orders)
@@ -833,7 +827,10 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId: order.id, token: session.access_token }),
       });
-      const data = await res.json().catch(() => ({ error: `Server error (HTTP ${res.status})` }));
+      const rawText = await res.text();
+      let data: { error?: string; success?: boolean };
+      try { data = JSON.parse(rawText); }
+      catch { data = { error: `HTTP ${res.status} — ${rawText.slice(0, 300)}` }; }
       if (!res.ok) {
         alert('Fulfillment failed: ' + (data.error || 'Unknown error'));
       } else {
