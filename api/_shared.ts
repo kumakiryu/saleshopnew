@@ -152,8 +152,8 @@ export async function fulfillOrder(orderId: string): Promise<void> {
   const { data: order, error: oErr } = await supabase.from('orders').select('*').eq('id', orderId).single();
   if (oErr || !order) throw new Error(`Order not found: ${orderId}`);
 
-  // Idempotency — skip if already fulfilled
-  if (order.status === 'delivered' || order.status === 'paid') return;
+  // Idempotency — skip only if already fully delivered
+  if (order.status === 'delivered') return;
 
   // Mark paid immediately to prevent duplicate processing
   await supabase.from('orders').update({ status: 'paid', updated_at: new Date().toISOString() }).eq('id', orderId);
