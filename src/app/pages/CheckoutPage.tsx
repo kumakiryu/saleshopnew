@@ -20,27 +20,30 @@ const CSS = `
   .pm-card.selected .pm-dot { opacity: 1; transform: scale(1); }
 `;
 
-const PAYMENT_METHODS: { id: PayMethod; label: string; sublabel: string; tags: string[]; color: string }[] = [
+const PAYMENT_METHODS: { id: PayMethod; label: string; sublabel: string; tags: string[]; color: string; badge?: string }[] = [
   {
     id: 'paymongo',
     label: 'GCash / Maya / Cards',
-    sublabel: 'Philippine payment gateway via PayMongo',
+    sublabel: 'Instant automatic delivery — pay with GCash, Maya, or any card',
     tags: ['GCash', 'Maya', 'Visa', 'Mastercard'],
     color: '#00BFFF',
-  },
-  {
-    id: 'coinsph',
-    label: 'Coins.ph Wallet',
-    sublabel: 'Pay via your Coins.ph balance or linked accounts',
-    tags: ['Coins.ph', 'GCash', 'Maya', 'Cebuana'],
-    color: '#00C896',
+    badge: 'INSTANT',
   },
   {
     id: 'coinbase',
     label: 'Cryptocurrency',
-    sublabel: 'Bitcoin, Ethereum, Litecoin & more via Coinbase Commerce',
+    sublabel: 'Instant automatic delivery via Coinbase Commerce',
     tags: ['BTC', 'ETH', 'LTC', 'USDC'],
     color: '#F7931A',
+    badge: 'INSTANT',
+  },
+  {
+    id: 'coinsph',
+    label: 'InstaPay / Bank Transfer',
+    sublabel: 'Scan the QR code with any bank app — delivery after manual verification',
+    tags: ['InstaPay', 'BancNet', 'Bank Transfer'],
+    color: '#00C896',
+    badge: 'MANUAL',
   },
 ];
 
@@ -215,7 +218,19 @@ export default function CheckoutPage() {
                     <div className="pm-dot" style={{ background: m.color }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{m.label}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{m.label}</p>
+                      {m.badge && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider"
+                          style={{
+                            background: m.badge === 'INSTANT' ? 'rgba(0,200,100,0.15)' : 'rgba(255,180,0,0.12)',
+                            color: m.badge === 'INSTANT' ? '#00C864' : '#FFB400',
+                            border: `1px solid ${m.badge === 'INSTANT' ? 'rgba(0,200,100,0.3)' : 'rgba(255,180,0,0.25)'}`,
+                          }}>
+                          {m.badge}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] mt-0.5" style={{ color: '#3a4570' }}>{m.sublabel}</p>
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {m.tags.map(tag => (
@@ -230,7 +245,7 @@ export default function CheckoutPage() {
               ))}
 
               <p className="text-[10px] leading-relaxed mt-1" style={{ color: '#2e3a5a' }}>
-                You will be redirected to the payment provider. Your order is saved automatically and visible on the order status page.
+                INSTANT methods deliver your codes automatically the moment payment clears. MANUAL (InstaPay/Bank) requires admin verification and may take longer.
               </p>
             </div>
 
