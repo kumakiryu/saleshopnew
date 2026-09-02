@@ -1,15 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://hxfccpadsbunynignbwn.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4ZmNjcGFkc2J1bnluaWduYnduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MDk1ODYsImV4cCI6MjA5ODQ4NTU4Nn0.YVABbHcntCEAWSkXtRtKsfWhQ_A8nDYweitrMLTSjyE';
 const APP_NAME = 'Sale Shop Admin';
 
+// ── TOTP ─────────────────────────────────────────────────────────────────────
+
 const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 function generateSecret(): string {
-  // 20 bytes → exactly 32 base32 chars (160 bits = standard RFC 6238 secret, multiple of 8)
   const bytes = crypto.randomBytes(20);
   let result = '', bits = 0, val = 0;
   for (const b of bytes) {
@@ -33,7 +33,7 @@ function b32ToBuffer(s: string): Buffer {
     if (bits >= 8) {
       bits -= 8;
       out.push((val >> bits) & 0xff);
-      val &= (1 << bits) - 1; // mask to prevent 32-bit integer overflow
+      val &= (1 << bits) - 1;
     }
   }
   return Buffer.from(out);
@@ -61,28 +61,73 @@ function totpUri(email: string, secret: string): string {
   return `otpauth://totp/${acc}?secret=${secret}&issuer=${iss}&algorithm=SHA1&digits=6&period=30`;
 }
 
-// ── Supabase helpers ─────────────────────────────────────────────────────────
+// ── Supabase REST helpers ─────────────────────────────────────────────────────
 
-function serviceClient() {
-  return createClient(SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
+function svcKey() {
+  const k = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!k) throw new Error('SUPABASE_SERVICE_ROLE_KEY not set');
+  return k;
+}
+function svcH() { const k = svcKey(); return { 'apikey': k, 'Authorization': `Bearer ${k}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }; }
+function anonH(token: string) { return { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }; }
+
+async function svcGet<T>(table: string, filters: Record<string, unknown>, select = '*'): Promise<T | null> {
+  const qs = new URLSearchParams({ select });
+  for (const [k, v] of Object.entries(filters)) qs.append(k, `eq.${v}`);
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, { headers: svcH() });
+  if (!r.ok) return null;
+  const rows = await r.json();
+  return Array.isArray(rows) ? (rows[0] ?? null) : null;
 }
 
-function userClient(token: string) {
-  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false },
-  });
+async function svcGetAll<T>(table: string, select = '*'): Promise<T[]> {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=${select}`, { headers: svcH() });
+  if (!r.ok) return [];
+  return r.json();
 }
 
-async function getAdminUser(token: string) {
-  const client = userClient(token);
-  const { data: { user }, error } = await client.auth.getUser();
-  if (error || !user) return null;
-  const { data: admin } = await client.from('admins').select('*').eq('id', user.id).single();
-  if (!admin) return null;
+async function svcUpdate(table: string, filters: Record<string, unknown>, data: unknown): Promise<void> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(filters)) qs.append(k, `eq.${v}`);
+  await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, { method: 'PATCH', headers: svcH(), body: JSON.stringify(data) });
+}
+
+async function svcInsert(table: string, data: unknown): Promise<void> {
+  await fetch(`${SUPABASE_URL}/rest/v1/${table}`, { method: 'POST', headers: svcH(), body: JSON.stringify(data) });
+}
+
+async function svcUpsert(table: string, data: unknown, onConflict: string): Promise<void> {
+  const h = { ...svcH(), 'Prefer': `return=representation,resolution=merge-duplicates,on_conflict=${onConflict}` };
+  await fetch(`${SUPABASE_URL}/rest/v1/${table}`, { method: 'POST', headers: h, body: JSON.stringify(data) });
+}
+
+async function svcDelete(table: string, filters: Record<string, unknown>): Promise<void> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(filters)) qs.append(k, `eq.${v}`);
+  await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, { method: 'DELETE', headers: svcH() });
+}
+
+async function svcGetUserById(userId: string): Promise<{ email?: string } | null> {
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, { headers: svcH() });
+  if (!r.ok) return null;
+  return r.json();
+}
+
+async function getAdminUser(token: string): Promise<{ user: { id: string; email: string }; admin: Record<string, unknown> } | null> {
+  const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: anonH(token) });
+  if (!userRes.ok) return null;
+  const user = await userRes.json();
+  if (!user?.id) return null;
+
+  const adminRes = await fetch(`${SUPABASE_URL}/rest/v1/admins?id=eq.${user.id}&select=*&limit=1`, { headers: anonH(token) });
+  if (!adminRes.ok) return null;
+  const rows = await adminRes.json();
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+
+  const admin = rows[0];
   if (admin.role === undefined) admin.role = 'administrator';
   if (admin.totp_enabled === undefined) admin.totp_enabled = false;
-  return { user, admin, client };
+  return { user: { id: user.id, email: user.email ?? '' }, admin };
 }
 
 // ── Handler ──────────────────────────────────────────────────────────────────
@@ -91,100 +136,84 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method !== 'POST') return res.status(405).end();
 
-    const { action, code, token } = req.body as {
-      action: string;
-      code?: string;
-      token: string;
-    };
-
+    const { action, code, token } = req.body as { action: string; code?: string; token: string };
     if (!token) return res.status(401).json({ error: 'No auth token' });
 
     const ctx = await getAdminUser(token);
     if (!ctx) return res.status(403).json({ error: 'Not an admin' });
 
     const { user, admin } = ctx;
-    const svc = serviceClient();
 
-    // ── status ──────────────────────────────────────────────────────────────
     if (action === 'status') {
       return res.status(200).json({ totp_enabled: admin.totp_enabled, role: admin.role ?? 'administrator' });
     }
 
-    // ── setup ────────────────────────────────────────────────────────────────
     if (action === 'setup') {
       const secret = generateSecret();
-      const uri = totpUri(user.email ?? 'admin', secret);
-      await svc.from('admin_totp_secrets').upsert(
-        { admin_id: user.id, secret, enabled: false },
-        { onConflict: 'admin_id' },
-      );
+      const uri = totpUri(user.email, secret);
+      await svcUpsert('admin_totp_secrets', { admin_id: user.id, secret, enabled: false }, 'admin_id');
       return res.status(200).json({ uri, secret });
     }
 
-    // ── verify-setup ─────────────────────────────────────────────────────────
     if (action === 'verify-setup') {
-      const { data: row } = await svc.from('admin_totp_secrets').select('secret').eq('admin_id', user.id).single();
+      const row = await svcGet<{ secret: string }>('admin_totp_secrets', { admin_id: user.id }, 'secret');
       if (!row) return res.status(400).json({ error: 'Run setup first' });
       if (!verifyTotp(code!, row.secret)) return res.status(400).json({ error: 'Invalid code — check your authenticator app' });
 
-      await svc.from('admin_totp_secrets').update({ enabled: true }).eq('admin_id', user.id);
-      await svc.from('admins').update({ totp_enabled: true }).eq('id', user.id);
-      await svc.from('admin_audit_logs').insert({
+      await svcUpdate('admin_totp_secrets', { admin_id: user.id }, { enabled: true });
+      await svcUpdate('admins', { id: user.id }, { totp_enabled: true });
+      await svcInsert('admin_audit_logs', {
         admin_id: user.id, action: '2fa_enabled', resource: 'settings',
         user_agent: req.headers['user-agent'] ?? null,
       });
       return res.status(200).json({ success: true });
     }
 
-    // ── verify (vault unlock) ────────────────────────────────────────────────
     if (action === 'verify') {
-      const { data: row } = await svc.from('admin_totp_secrets').select('secret, enabled').eq('admin_id', user.id).single();
+      const row = await svcGet<{ secret: string; enabled: boolean }>('admin_totp_secrets', { admin_id: user.id }, 'secret,enabled');
       if (!row?.enabled) return res.status(400).json({ error: '2FA not enabled' });
       if (!verifyTotp(code!, row.secret)) return res.status(400).json({ error: 'Invalid code' });
 
-      await svc.from('admin_audit_logs').insert({
+      await svcInsert('admin_audit_logs', {
         admin_id: user.id, action: 'vault_unlocked', resource: 'inventory',
         user_agent: req.headers['user-agent'] ?? null,
       });
       return res.status(200).json({ success: true });
     }
 
-    // ── disable ──────────────────────────────────────────────────────────────
     if (action === 'disable') {
       if (!code) return res.status(400).json({ error: 'Confirm with your current code first' });
-      const { data: row } = await svc.from('admin_totp_secrets').select('secret').eq('admin_id', user.id).single();
+      const row = await svcGet<{ secret: string }>('admin_totp_secrets', { admin_id: user.id }, 'secret');
       if (row && !verifyTotp(code, row.secret)) return res.status(400).json({ error: 'Invalid code' });
 
-      await svc.from('admin_totp_secrets').delete().eq('admin_id', user.id);
-      await svc.from('admins').update({ totp_enabled: false }).eq('id', user.id);
-      await svc.from('admin_audit_logs').insert({
+      await svcDelete('admin_totp_secrets', { admin_id: user.id });
+      await svcUpdate('admins', { id: user.id }, { totp_enabled: false });
+      await svcInsert('admin_audit_logs', {
         admin_id: user.id, action: '2fa_disabled', resource: 'settings',
         user_agent: req.headers['user-agent'] ?? null,
       });
       return res.status(200).json({ success: true });
     }
 
-    // ── list-admins ──────────────────────────────────────────────────────────
     if (action === 'list-admins') {
       if (admin.role !== 'owner') return res.status(403).json({ error: 'Owner role required' });
-      const { data: rows } = await svc.from('admins').select('id, role, totp_enabled');
+      const rows = await svcGetAll<{ id: string; role: string; totp_enabled: boolean }>('admins', 'id,role,totp_enabled');
       const list = await Promise.all(
-        (rows ?? []).map(async (a) => {
-          const { data: { user: u } } = await svc.auth.admin.getUserById(a.id);
+        rows.map(async (a) => {
+          const u = await svcGetUserById(a.id);
           return { id: a.id, email: u?.email ?? 'Unknown', role: a.role ?? 'administrator', totp_enabled: a.totp_enabled };
         })
       );
       return res.status(200).json({ admins: list });
     }
 
-    // ── set-role ─────────────────────────────────────────────────────────────
     if (action === 'set-role') {
       if (admin.role !== 'owner') return res.status(403).json({ error: 'Owner role required' });
       const { targetId, newRole } = req.body as { targetId: string; newRole: string };
       if (!['owner', 'administrator', 'moderator'].includes(newRole)) return res.status(400).json({ error: 'Invalid role' });
 
-      await svc.from('admins').update({ role: newRole }).eq('id', targetId);
-      await svc.from('admin_audit_logs').insert({
+      await svcUpdate('admins', { id: targetId }, { role: newRole });
+      await svcInsert('admin_audit_logs', {
         admin_id: user.id, action: 'role_changed', resource: `${targetId.slice(0, 8)} → ${newRole}`,
         user_agent: req.headers['user-agent'] ?? null,
       });
@@ -195,7 +224,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error('[admin-totp] unhandled error:', message);
+    console.error('[admin-totp] error:', message);
     return res.status(500).json({ error: message });
   }
 }
