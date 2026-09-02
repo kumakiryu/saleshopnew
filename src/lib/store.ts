@@ -1,5 +1,23 @@
-import { create } from 'zustand';
+import { useSyncExternalStore } from 'react';
 import type { Product, Announcement, CartItem, Order } from './types';
+
+// Minimal zustand-compatible store using React 18's useSyncExternalStore
+function createStore<T>(init: (set: (partial: Partial<T> | ((s: T) => Partial<T>)) => void, get: () => T) => T) {
+  const listeners = new Set<() => void>();
+  let state: T;
+  const set = (partial: Partial<T> | ((s: T) => Partial<T>)) => {
+    const update = typeof partial === 'function' ? (partial as (s: T) => Partial<T>)(state) : partial;
+    state = { ...state, ...update };
+    listeners.forEach(l => l());
+  };
+  const get = () => state;
+  state = init(set, get);
+  const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
+  return function useStore<U = T>(selector?: (s: T) => U): U {
+    return useSyncExternalStore(subscribe, () => selector ? selector(state) : state as unknown as U);
+  };
+}
+const create = <T>(init: (set: any, get: any) => T) => createStore<T>(init);
 
 const LS_KEY_SEEN   = 'saleshop_announcements_seen_at';
 const LS_KEY_CART   = 'saleshop_cart';
