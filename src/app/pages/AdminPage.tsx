@@ -640,6 +640,8 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [adminRole, setAdminRole] = useState('administrator');
   const [vaultOpen, setVaultOpen] = useState(isVaultUnlocked());
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
 
   const TAB_ACCESS: Record<string, Array<typeof tab>> = {
     owner:         ['products', 'orders', 'announcements', 'codes', 'accounts', 'settings'],
@@ -694,7 +696,11 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
   }, []);
 
   // Refresh vault state when switching tabs (e.g. user unlocked vault in codes tab, now viewing orders)
-  function switchTab(t: typeof tab) { setVaultOpen(isVaultUnlocked()); setTab(t); }
+  function switchTab(t: typeof tab) {
+    setVaultOpen(isVaultUnlocked());
+    setTab(t);
+    if (t === 'settings') loadMaintenanceMode();
+  }
 
   const totalStock      = products.reduce((s, p) => s + p.stock, 0);
   const lowStock        = products.filter(p => p.stock > 0 && p.stock < 10).length;
@@ -740,6 +746,23 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
   async function cancelOrder(orderId: string) {
     if (!window.confirm('Cancel this order?')) return;
     await updateOrderStatus(orderId, 'cancelled');
+  }
+
+  async function loadMaintenanceMode() {
+    const { data } = await supabase.from('site_config').select('value').eq('key', 'maintenance_mode').single();
+    setMaintenanceMode(data?.value === 'true');
+  }
+
+  async function toggleMaintenanceMode() {
+    setMaintenanceLoading(true);
+    const next = !maintenanceMode;
+    const { error } = await supabase.from('site_config').upsert(
+      { key: 'maintenance_mode', value: String(next), updated_at: new Date().toISOString() },
+      { onConflict: 'key' }
+    );
+    if (!error) setMaintenanceMode(next);
+    else alert('Failed to update maintenance mode. Make sure the site_config table exists.');
+    setMaintenanceLoading(false);
   }
 
   async function fulfillCoinsphOrder(orderId: string) {
@@ -792,22 +815,22 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
   }
 
   async function sendDeliveryEmail(order: import('@/lib/types').Order) {
+    if (!window.confirm('Assign codes/accounts from inventory, deduct stock, and send delivery email?')) return;
     setSendingEmail(order.id);
     try {
-      const { data: items } = await supabase.from('order_items').select('*').eq('order_id', order.id);
-      const res = await fetch('/api/send-order-email', {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/admin-fulfill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order, items: items ?? [] }),
+        body: JSON.stringify({ orderId: order.id, token: session?.access_token }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const { error } = await res.json();
-        alert('Email failed: ' + (error || 'Unknown error'));
+        alert('Fulfillment failed: ' + (data.error || 'Unknown error'));
       } else {
-        alert('Email sent successfully!');
-        if (order.status !== 'delivered') await updateOrderStatus(order.id, 'delivered');
+        alert('Order fulfilled — codes assigned, stock updated, email sent!');
       }
-    } catch { alert('Email request failed. Check API config.'); }
+    } catch { alert('Fulfillment request failed. Check API config.'); }
     finally { setSendingEmail(null); }
   }
 
@@ -1094,7 +1117,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
                           <button disabled={sendingEmail === o.id} onClick={() => sendDeliveryEmail(o)}
                             className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide"
                             style={{ background: 'rgba(0,230,118,0.1)', border: '1px solid rgba(0,230,118,0.25)', color: '#00E676', cursor: 'pointer', opacity: sendingEmail === o.id ? 0.5 : 1 }}>
-                            {sendingEmail === o.id ? 'Sending...' : 'Send Email'}
+                            {sendingEmail === o.id ? 'Fulfilling...' : 'Fulfill & Email'}
                           </button>
                         )}
                         {o.payment_method === 'coinsph' && o.status === 'pending' && (
@@ -1216,7 +1239,56 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
         )}
 
         {tab === 'settings' && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
+            className="flex flex-col gap-6">
+
+            {/* ── Maintenance mode card ── */}
+            <div className="rounded-2xl p-6" style={{ background: 'linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <p className="text-[10px] uppercase tracking-widest font-bold mb-4" style={{ color: '#00BFFF' }}>Site Settings</p>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold mb-1" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+                    Maintenance Mode
+                  </p>
+                  <p className="text-xs" style={{ color: '#3a4570' }}>
+                    {maintenanceMode
+                      ? 'Site is hidden from visitors. Admins can still access everything.'
+                      : 'Site is live and visible to all visitors.'}
+                  </p>
+                </div>
+                <button
+                  onClick={toggleMaintenanceMode}
+                  disabled={maintenanceLoading}
+                  style={{
+                    flexShrink: 0,
+                    padding: '8px 20px',
+                    borderRadius: 10,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    fontFamily: "'Rajdhani','Inter',sans-serif",
+                    letterSpacing: '0.06em',
+                    cursor: maintenanceLoading ? 'not-allowed' : 'pointer',
+                    opacity: maintenanceLoading ? 0.6 : 1,
+                    transition: 'all 0.2s',
+                    background: maintenanceMode
+                      ? 'rgba(0,230,118,0.12)'
+                      : 'rgba(255,140,0,0.12)',
+                    border: maintenanceMode
+                      ? '1px solid rgba(0,230,118,0.3)'
+                      : '1px solid rgba(255,140,0,0.3)',
+                    color: maintenanceMode ? '#00E676' : '#FF8C00',
+                  }}>
+                  {maintenanceLoading ? '...' : maintenanceMode ? '▲ Go Live' : '⏸ Maintenance'}
+                </button>
+              </div>
+
+              {maintenanceMode && (
+                <div className="mt-4 px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(255,140,0,0.06)', border: '1px solid rgba(255,140,0,0.2)', color: '#FF8C00' }}>
+                  ⚠ Maintenance is ON — visitors see the maintenance page. You can still browse the shop normally as an admin.
+                </div>
+              )}
+            </div>
+
             <AdminSettingsPanel
               adminId={user.id}
               adminEmail={user.email}
