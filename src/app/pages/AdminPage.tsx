@@ -770,15 +770,20 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
     setBusy(b => ({ ...b, [orderId]: true }));
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) { alert('Not logged in — please refresh.'); return; }
       const res = await fetch('/api/admin-fulfill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, token: session?.access_token }),
+        body: JSON.stringify({ orderId, token: session.access_token }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: `Server error (HTTP ${res.status})` }));
       if (!res.ok) alert('Fulfillment failed: ' + (data.error ?? 'Unknown error'));
-    } catch { alert('Request failed. Check your connection.'); }
-    finally { setBusy(b => ({ ...b, [orderId]: false })); }
+      else {
+        supabase.from('orders').select('*').order('created_at', { ascending: false }).then(({ data: rows }) => { if (rows) setOrders(rows); });
+      }
+    } catch (e) {
+      alert('Request failed: ' + (e instanceof Error ? e.message : String(e)));
+    } finally { setBusy(b => ({ ...b, [orderId]: false })); }
   }
 
   async function checkCoinsphPayments() {
@@ -819,19 +824,25 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
     setSendingEmail(order.id);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        alert('Not logged in — please refresh and log in again.');
+        return;
+      }
       const res = await fetch('/api/admin-fulfill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: order.id, token: session?.access_token }),
+        body: JSON.stringify({ orderId: order.id, token: session.access_token }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: `Server error (HTTP ${res.status})` }));
       if (!res.ok) {
         alert('Fulfillment failed: ' + (data.error || 'Unknown error'));
       } else {
         alert('Order fulfilled — codes assigned, stock updated, email sent!');
+        supabase.from('orders').select('*').order('created_at', { ascending: false }).then(({ data: rows }) => { if (rows) setOrders(rows); });
       }
-    } catch { alert('Fulfillment request failed. Check API config.'); }
-    finally { setSendingEmail(null); }
+    } catch (e) {
+      alert('Fulfillment request failed: ' + (e instanceof Error ? e.message : String(e)));
+    } finally { setSendingEmail(null); }
   }
 
   return (
