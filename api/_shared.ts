@@ -1,12 +1,66 @@
-import { createClient } from '@supabase/supabase-js';
+// Server-side Supabase helper using plain fetch — no @supabase/supabase-js
+// (avoids ESM/CJS issues in Vercel Node.js serverless)
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'https://hxfccpadsbunynignbwn.supabase.co';
 
-export function getAdminSupabase() {
+function getServiceKey(): string {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY not set');
-  return createClient(SUPABASE_URL, key, { auth: { persistSession: false } });
+  return key;
 }
+
+function serviceHeaders() {
+  const key = getServiceKey();
+  return {
+    'apikey': key,
+    'Authorization': `Bearer ${key}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation',
+  };
+}
+
+async function dbGet<T>(table: string, filters: Record<string, unknown>, extra?: string): Promise<T | null> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(filters)) qs.append(k, `eq.${v}`);
+  qs.set('select', '*');
+  if (extra) extra.split('&').forEach(p => { const eq = p.indexOf('='); if (eq >= 0) qs.set(p.slice(0, eq), p.slice(eq + 1)); });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, { headers: serviceHeaders() });
+  if (!res.ok) return null;
+  const rows = await res.json() as T[];
+  return Array.isArray(rows) ? (rows[0] ?? null) : null;
+}
+
+async function dbGetMany<T>(table: string, filters: Record<string, unknown>): Promise<T[]> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(filters)) qs.append(k, `eq.${v}`);
+  qs.set('select', '*');
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, { headers: serviceHeaders() });
+  if (!res.ok) return [];
+  return (await res.json()) as T[];
+}
+
+async function dbGetSelect<T>(table: string, filters: Record<string, unknown>, select: string, extra?: string): Promise<T | null> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(filters)) qs.append(k, `eq.${v}`);
+  qs.set('select', select);
+  if (extra) extra.split('&').forEach(p => { const eq = p.indexOf('='); if (eq >= 0) qs.set(p.slice(0, eq), p.slice(eq + 1)); });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, { headers: serviceHeaders() });
+  if (!res.ok) return null;
+  const rows = await res.json() as T[];
+  return Array.isArray(rows) ? (rows[0] ?? null) : null;
+}
+
+async function dbUpdate(table: string, filters: Record<string, unknown>, data: Record<string, unknown>): Promise<void> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(filters)) qs.append(k, `eq.${v}`);
+  await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, {
+    method: 'PATCH',
+    headers: serviceHeaders(),
+    body: JSON.stringify(data),
+  });
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface OrderItem {
   id: string;
@@ -40,6 +94,8 @@ interface AssignedDelivery {
   username?: string;
   password?: string;
 }
+
+// ── Email builder ─────────────────────────────────────────────────────────────
 
 function buildEmailHtml(order: Order, items: OrderItem[], deliveries: AssignedDelivery[]): string {
   const itemRows = items.map(i => `
@@ -139,92 +195,82 @@ async function sendEmail(order: Order, items: OrderItem[], deliveries: AssignedD
   });
 }
 
-/**
- * Called by webhook handlers when payment is confirmed.
- * 1. Marks order paid
- * 2. For each item: assigns code or account (based on product_type), deducts stock
- * 3. Sends delivery email with all assigned items
- * 4. Auto-marks delivered when all items are fulfilled
- */
+// ── Shared auth helper ────────────────────────────────────────────────────────
+
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4ZmNjcGFkc2J1bnluaWduYnduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MDk1ODYsImV4cCI6MjA5ODQ4NTU4Nn0.YVABbHcntCEAWSkXtRtKsfWhQ_A8nDYweitrMLTSjyE';
+
+export async function verifyAdminToken(token: string): Promise<{ ok: boolean; userId?: string; reason?: string }> {
+  const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
+  });
+  if (!userRes.ok) return { ok: false, reason: 'Not authenticated' };
+  const user = await userRes.json();
+  if (!user?.id) return { ok: false, reason: 'Not authenticated' };
+
+  const adminRes = await fetch(`${SUPABASE_URL}/rest/v1/admins?id=eq.${user.id}&select=id&limit=1`, {
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
+  });
+  if (!adminRes.ok) return { ok: false, reason: 'Admin check failed' };
+  const rows = await adminRes.json();
+  if (!Array.isArray(rows) || rows.length === 0) return { ok: false, reason: 'Not an admin' };
+  return { ok: true, userId: user.id };
+}
+
+// ── Main fulfillment ──────────────────────────────────────────────────────────
+
 export async function fulfillOrder(orderId: string): Promise<void> {
-  const supabase = getAdminSupabase();
+  const order = await dbGet<Order>('orders', { id: orderId });
+  if (!order) throw new Error(`Order not found: ${orderId}`);
 
-  const { data: order, error: oErr } = await supabase.from('orders').select('*').eq('id', orderId).single();
-  if (oErr || !order) throw new Error(`Order not found: ${orderId}`);
-
-  // Idempotency — skip only if already fully delivered
   if (order.status === 'delivered') return;
 
-  // Mark paid immediately to prevent duplicate processing
-  await supabase.from('orders').update({ status: 'paid', updated_at: new Date().toISOString() }).eq('id', orderId);
+  await dbUpdate('orders', { id: orderId }, { status: 'paid', updated_at: new Date().toISOString() });
 
-  const { data: rawItems } = await supabase.from('order_items').select('*').eq('order_id', orderId);
-  const orderItems: OrderItem[] = rawItems ?? [];
-
+  const orderItems = await dbGetMany<OrderItem>('order_items', { order_id: orderId });
   const deliveries: AssignedDelivery[] = [];
 
   for (const item of orderItems) {
     if (!item.product_id) continue;
 
-    // Get product type
-    const { data: product } = await supabase
-      .from('products')
-      .select('product_type, stock, download_url')
-      .eq('id', item.product_id)
-      .single();
-
+    const product = await dbGetSelect<{ product_type: string; stock: number; download_url: string | null }>(
+      'products', { id: item.product_id }, 'product_type,stock,download_url'
+    );
     if (!product) continue;
 
     const ptype = product.product_type ?? 'physical';
 
     if (ptype === 'digital_code') {
-      // Assign one code per quantity
       for (let q = 0; q < item.quantity; q++) {
-        const { data: code } = await supabase
-          .from('product_codes')
-          .select('*')
-          .eq('product_id', item.product_id)
-          .eq('status', 'available')
-          .limit(1)
-          .single();
-
+        const code = await dbGet<{ id: string; code: string }>(
+          'product_codes', { product_id: item.product_id, status: 'available' }, 'limit=1'
+        );
         if (code) {
-          await supabase.from('product_codes').update({
+          await dbUpdate('product_codes', { id: code.id }, {
             status: 'delivered',
             assigned_to: orderId,
             assigned_at: new Date().toISOString(),
-          }).eq('id', code.id);
-
-          // Store first code in order_item (subsequent codes sent via email)
+          });
           if (q === 0) {
-            await supabase.from('order_items').update({ assigned_code: code.code }).eq('id', item.id);
+            await dbUpdate('order_items', { id: item.id }, { assigned_code: code.code });
           }
-
           deliveries.push({ productName: item.product_name, type: 'code', code: code.code });
         }
       }
     } else if (ptype === 'account_product') {
-      const { data: account } = await supabase
-        .from('product_accounts')
-        .select('*')
-        .eq('product_id', item.product_id)
-        .eq('status', 'available')
-        .limit(1)
-        .single();
-
+      const account = await dbGet<{ id: string; username: string; password: string }>(
+        'product_accounts', { product_id: item.product_id, status: 'available' }, 'limit=1'
+      );
       if (account) {
-        await supabase.from('product_accounts').update({
+        await dbUpdate('product_accounts', { id: account.id }, {
           status: 'delivered',
           assigned_order_id: orderId,
           assigned_email: order.customer_email,
           assigned_at: new Date().toISOString(),
-        }).eq('id', account.id);
-
-        await supabase.from('order_items').update({
+        });
+        await dbUpdate('order_items', { id: item.id }, {
           assigned_username: account.username,
           assigned_password: account.password,
-        }).eq('id', item.id);
-
+        });
         deliveries.push({
           productName: item.product_name,
           type: 'account',
@@ -232,27 +278,21 @@ export async function fulfillOrder(orderId: string): Promise<void> {
           password: account.password,
         });
       } else {
-        // No inventory available — flag the order
-        await supabase.from('orders').update({
+        await dbUpdate('orders', { id: orderId }, {
           status: 'waiting_for_inventory',
           updated_at: new Date().toISOString(),
-        }).eq('id', orderId);
-        // Skip further processing; admin must restock then manually trigger
+        });
         return;
       }
     } else if (ptype === 'digital_download' && (item.download_url || product.download_url)) {
-      const url = item.download_url ?? product.download_url;
+      const url = item.download_url ?? product.download_url ?? '';
       deliveries.push({ productName: item.product_name, type: 'download', downloadUrl: url });
     }
 
-    // Deduct stock for all types
     const newStock = Math.max(0, product.stock - item.quantity);
-    await supabase.from('products').update({ stock: newStock, updated_at: new Date().toISOString() }).eq('id', item.product_id);
+    await dbUpdate('products', { id: item.product_id }, { stock: newStock, updated_at: new Date().toISOString() });
   }
 
-  // Send delivery email
-  await sendEmail(order as Order, orderItems, deliveries).catch(() => null);
-
-  // Mark delivered
-  await supabase.from('orders').update({ status: 'delivered', updated_at: new Date().toISOString() }).eq('id', orderId);
+  await sendEmail(order, orderItems, deliveries).catch(() => null);
+  await dbUpdate('orders', { id: orderId }, { status: 'delivered', updated_at: new Date().toISOString() });
 }
