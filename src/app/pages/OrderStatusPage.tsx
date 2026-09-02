@@ -70,25 +70,31 @@ export default function OrderStatusPage() {
   useEffect(() => {
     if (!id) return;
 
-    // Initial fetch
-    Promise.all([
-      supabase.from('orders').select('*').eq('id', id).single(),
-      supabase.from('order_items').select('*').eq('order_id', id),
-    ]).then(([{ data: o, error: oErr }, { data: oi }]) => {
+    let currentStatus = '';
+
+    async function fetchStatus() {
+      const [{ data: o, error: oErr }, { data: oi }] = await Promise.all([
+        supabase.from('orders').select('*').eq('id', id).single(),
+        supabase.from('order_items').select('*').eq('order_id', id),
+      ]);
       if (oErr || !o) { setError('Order not found.'); setLoading(false); return; }
       setOrder(o as Order);
       setItems((oi ?? []) as OrderItem[]);
       setLoading(false);
-    });
+      currentStatus = o.status;
+    }
 
-    // Realtime subscription
-    const ch = supabase.channel(`order-${id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` }, (payload) => {
-        setOrder(payload.new as Order);
-      })
-      .subscribe();
+    fetchStatus();
+    // Poll every 6 seconds — stops automatically once delivered/failed
+    const poll = setInterval(() => {
+      if (currentStatus === 'delivered' || currentStatus === 'failed' || currentStatus === 'cancelled') {
+        clearInterval(poll);
+        return;
+      }
+      fetchStatus();
+    }, 6_000);
 
-    return () => { supabase.removeChannel(ch); };
+    return () => clearInterval(poll);
   }, [id]);
 
   if (loading) return (
