@@ -4,19 +4,22 @@ import { fulfillOrder } from './_shared';
 
 function verifyPayMongoSignature(rawBody: string, signatureHeader: string, secret: string): boolean {
   try {
-    const parts = Object.fromEntries(
-      signatureHeader.split(',').map(p => {
-        const i = p.indexOf('=');
-        return [p.slice(0, i), p.slice(i + 1)] as [string, string];
-      })
-    );
+    console.log('[paymongo-webhook] sig header:', signatureHeader?.slice(0, 100));
+    const parts: Record<string, string> = {};
+    for (const part of signatureHeader.split(',')) {
+      const i = part.indexOf('=');
+      if (i > 0) parts[part.slice(0, i).trim()] = part.slice(i + 1).trim();
+    }
     const timestamp = parts['t'];
-    const sig = parts['li'] ?? parts['te']; // li = live, te = test
-    if (!timestamp || !sig) return false;
+    if (!timestamp) return false;
     const payload = `${timestamp}.${rawBody}`;
     const expected = createHmac('sha256', secret).update(payload).digest('hex');
-    return expected === sig;
-  } catch {
+    // Check both li (live) and te (test) — whichever the secret matches
+    const ok = (!!parts['li'] && expected === parts['li']) || (!!parts['te'] && expected === parts['te']);
+    if (!ok) console.error('[paymongo-webhook] sig mismatch. keys present:', Object.keys(parts).join(','));
+    return ok;
+  } catch (e) {
+    console.error('[paymongo-webhook] sig error:', e);
     return false;
   }
 }
