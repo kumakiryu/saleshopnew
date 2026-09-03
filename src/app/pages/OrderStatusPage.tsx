@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useSearchParams } from 'react-router';
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import type { Order, OrderItem, OrderStatus } from '@/lib/types';
@@ -62,6 +62,8 @@ const STATUS_COLOR: Record<string, string> = {
 export default function OrderStatusPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const paymentResult = searchParams.get('payment'); // 'success' | 'cancelled' | null
   const [order, setOrder]   = useState<Order | null>(null);
   const [items, setItems]   = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,14 +87,15 @@ export default function OrderStatusPage() {
     }
 
     fetchStatus();
-    // Poll every 6 seconds — stops automatically once delivered/failed
+    // Poll faster right after payment (3s), otherwise 6s
+    const pollMs = paymentResult === 'success' ? 3_000 : 6_000;
     const poll = setInterval(() => {
       if (currentStatus === 'delivered' || currentStatus === 'failed' || currentStatus === 'cancelled') {
         clearInterval(poll);
         return;
       }
       fetchStatus();
-    }, 6_000);
+    }, pollMs);
 
     return () => clearInterval(poll);
   }, [id]);
@@ -339,8 +342,49 @@ export default function OrderStatusPage() {
           </motion.div>
         )}
 
-        {/* Payment instructions — other methods (pending only) */}
-        {order.status === 'pending' && order.payment_method !== 'coinsph' && (
+        {/* Payment received — verifying (after PayMongo/Coinbase redirect back) */}
+        {order.status === 'pending' && order.payment_method !== 'coinsph' && paymentResult === 'success' && (
+          <motion.div className="rounded-2xl p-5 mb-5"
+            style={{ background: 'rgba(0,230,118,0.06)', border: '1px solid rgba(0,230,118,0.25)' }}
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#00E676' }} />
+              <p className="text-xs font-bold" style={{ color: '#00E676' }}>Payment Received</p>
+            </div>
+            <p className="text-xs leading-relaxed mb-1" style={{ color: '#7b88c0' }}>
+              Your payment was submitted successfully. We are verifying it now — your products will be delivered shortly.
+            </p>
+            <p className="text-[10px]" style={{ color: '#3a4570' }}>This page updates automatically every few seconds.</p>
+          </motion.div>
+        )}
+
+        {/* Payment cancelled */}
+        {paymentResult === 'cancelled' && order.status === 'pending' && (
+          <motion.div className="rounded-2xl p-5 mb-5"
+            style={{ background: 'rgba(255,68,68,0.06)', border: '1px solid rgba(255,68,68,0.2)' }}
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+            <p className="text-xs font-bold mb-2" style={{ color: '#FF4444' }}>Payment Cancelled</p>
+            <p className="text-xs leading-relaxed mb-3" style={{ color: '#7b88c0' }}>
+              Your payment was not completed. Your order is still open — contact us on Discord if you need help or want to try again.
+            </p>
+            <div className="flex items-center gap-2 p-2.5 rounded-lg mb-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <span className="text-[10px] uppercase tracking-widest" style={{ color: '#3a4570' }}>Order ID</span>
+              <span className="text-xs font-mono font-bold flex-1" style={{ color: '#c8d0f0' }}>{order.id}</span>
+              <button onClick={() => navigator.clipboard.writeText(order.id)}
+                className="text-[10px] px-2 py-0.5 rounded" style={{ background: 'rgba(0,191,255,0.08)', color: '#00BFFF', border: '1px solid rgba(0,191,255,0.2)', cursor: 'pointer' }}>
+                Copy
+              </button>
+            </div>
+            <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold"
+              style={{ background: 'rgba(88,101,242,0.15)', border: '1px solid rgba(88,101,242,0.3)', color: '#7b8ce8', textDecoration: 'none', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+              Contact on Discord →
+            </a>
+          </motion.div>
+        )}
+
+        {/* Awaiting Payment — only show if no payment attempt yet */}
+        {order.status === 'pending' && order.payment_method !== 'coinsph' && !paymentResult && (
           <motion.div className="rounded-2xl p-5 mb-5"
             style={{ background: 'rgba(255,140,0,0.06)', border: '1px solid rgba(255,140,0,0.2)' }}
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
