@@ -127,7 +127,9 @@ export default function CheckoutPage() {
         return;
       }
 
-      window.location.href = data.url;
+      // Store payment URL then navigate to order status — PayMongo opens in new tab from there
+      if (data.url) localStorage.setItem(`pm_url_${order.id}`, data.url);
+      navigate(`/order-status/${order.id}`);
     } catch (err: unknown) {
       const e = err as any;
       setError(e?.message || JSON.stringify(err) || 'Failed to place order. Try again.');
