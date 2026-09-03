@@ -68,6 +68,15 @@ export default function OrderStatusPage() {
   const [items, setItems]   = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [payWindowOpen, setPayWindowOpen] = useState(false);
+
+  // Load stored PayMongo URL from checkout page
+  useEffect(() => {
+    if (!id) return;
+    const stored = localStorage.getItem(`pm_url_${id}`);
+    if (stored) setPaymentUrl(stored);
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -84,18 +93,21 @@ export default function OrderStatusPage() {
       setItems((oi ?? []) as OrderItem[]);
       setLoading(false);
       currentStatus = o.status;
+      if (o.status !== 'pending') {
+        localStorage.removeItem(`pm_url_${id}`);
+        setPaymentUrl(null);
+      }
     }
 
     fetchStatus();
-    // Poll faster right after payment (3s), otherwise 6s
-    const pollMs = paymentResult === 'success' ? 3_000 : 6_000;
+    // Poll every 3s so status update after payment appears quickly
     const poll = setInterval(() => {
       if (currentStatus === 'delivered' || currentStatus === 'failed' || currentStatus === 'cancelled') {
         clearInterval(poll);
         return;
       }
       fetchStatus();
-    }, pollMs);
+    }, 3_000);
 
     return () => clearInterval(poll);
   }, [id]);
@@ -383,8 +395,36 @@ export default function OrderStatusPage() {
           </motion.div>
         )}
 
-        {/* Awaiting Payment — only show if no payment attempt yet */}
-        {order.status === 'pending' && order.payment_method !== 'coinsph' && !paymentResult && (
+        {/* Pay Now button — opens PayMongo in new tab, user stays on this page */}
+        {order.status === 'pending' && order.payment_method !== 'coinsph' && paymentUrl && !paymentResult && (
+          <motion.div className="rounded-2xl overflow-hidden mb-5"
+            style={{ background: 'rgba(0,191,255,0.05)', border: '1px solid rgba(0,191,255,0.25)' }}
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+            <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(0,191,255,0.1)' }}>
+              <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>Complete Your Payment</p>
+              <p className="text-[10px] mt-0.5" style={{ color: '#3a4570' }}>A payment window will open. Come back here after paying — this page updates automatically.</p>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-3">
+              <button
+                onClick={() => { window.open(paymentUrl, '_blank', 'noopener,noreferrer'); setPayWindowOpen(true); }}
+                className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl text-sm font-bold"
+                style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.15), rgba(0,191,255,0.08))', border: '1px solid rgba(0,191,255,0.4)', color: '#00BFFF', cursor: 'pointer', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.06em' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                {payWindowOpen ? 'Open Payment Again' : 'Pay Now'}
+              </button>
+              {payWindowOpen && (
+                <p className="text-[10px] text-center" style={{ color: '#3a4570' }}>
+                  Already paid? This page will update within a few seconds.
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Fallback — no URL (e.g. old orders or direct navigation) */}
+        {order.status === 'pending' && order.payment_method !== 'coinsph' && !paymentUrl && !paymentResult && (
           <motion.div className="rounded-2xl p-5 mb-5"
             style={{ background: 'rgba(255,140,0,0.06)', border: '1px solid rgba(255,140,0,0.2)' }}
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
