@@ -24,32 +24,50 @@ function verifyPayMongoSignature(rawBody: string, signatureHeader: string, secre
   }
 }
 
-export const config = { api: { bodyParser: false } };
-
 async function getRawBody(req: VercelRequest): Promise<string> {
   return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', chunk => { data += chunk; });
-    req.on('end', () => resolve(data));
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+    req.on('end', () => {
+      if (chunks.length > 0) {
+        const raw = Buffer.concat(chunks).toString('utf8');
+        console.log('[paymongo-webhook] rawBody from stream, length:', raw.length);
+        resolve(raw);
+      } else if (req.body != null) {
+        // Vercel already parsed the body — re-serialize to get back raw JSON
+        const fallback = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+        console.log('[paymongo-webhook] rawBody from req.body fallback, length:', fallback.length);
+        resolve(fallback);
+      } else {
+        console.warn('[paymongo-webhook] rawBody is empty — sig check will fail');
+        resolve('');
+      }
+    });
     req.on('error', reject);
   });
 }
 
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
 function extractOrderId(event: any): string | undefined {
-  const attrs = event?.data?.attributes?.data?.attributes ?? {};
+  // Primary: remarks field on the link/payment object
+  const dataAttrs = event?.data?.attributes?.data?.attributes ?? {};
+  if (dataAttrs.remarks && UUID_RE.test(dataAttrs.remarks)) return dataAttrs.remarks.match(UUID_RE)![0];
 
-  // remarks is set to the full orderId when we create the payment link
-  if (attrs.remarks && /^[0-9a-f-]{36}$/i.test(attrs.remarks)) {
-    return attrs.remarks;
+  // Fallback: scan entire event payload recursively for any UUID
+  function scan(obj: any, depth = 0): string | undefined {
+    if (depth > 6 || !obj || typeof obj !== 'object') return undefined;
+    for (const val of Object.values(obj)) {
+      if (typeof val === 'string') { const m = val.match(UUID_RE); if (m) return m[0]; }
+      else if (typeof val === 'object') { const found = scan(val, depth + 1); if (found) return found; }
+    }
+    return undefined;
   }
-
-  // fallback: scan description for a UUID
-  const desc: string = attrs.description ?? '';
-  const match = desc.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-  if (match) return match[0];
-
-  return undefined;
+  return scan(event?.data?.attributes);
 }
+
+// Tell Vercel not to pre-parse the body so we can read raw bytes for HMAC
+export const config = { api: { bodyParser: false } };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -80,9 +98,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (orderId) {
       try {
         await fulfillOrder(orderId);
+        console.log('[paymongo-webhook] fulfillOrder succeeded for', orderId);
       } catch (err) {
-        console.error('[paymongo-webhook] fulfillOrder failed:', err);
-        return res.status(500).json({ error: String(err) });
+        console.error('[paymongo-webhook] fulfillOrder failed:', String(err));
+        // Return 200 so PayMongo stops retrying — admin can fulfill manually
+        return res.status(200).json({ received: true, fulfillError: String(err) });
       }
     } else {
       console.warn('[paymongo-webhook] could not extract orderId from event');
