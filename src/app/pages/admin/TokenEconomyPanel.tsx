@@ -8,7 +8,7 @@ function getAdminToken() {
   try { const s = localStorage.getItem('sb_session'); return s ? JSON.parse(s).access_token : ''; } catch { return ''; }
 }
 
-type SubTab = 'overview' | 'manage' | 'rewards' | 'leaderboard';
+type SubTab = 'overview' | 'manage' | 'rewards' | 'leaderboard' | 'logs';
 
 export default function TokenEconomyPanel({ adminToken }: Props) {
   const [subTab, setSubTab] = useState<SubTab>('overview');
@@ -29,12 +29,60 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
   const [rewardLoading, setRewardLoading] = useState(false);
   const [editingReward, setEditingReward] = useState<RewardProduct | null>(null);
 
+  const [codeCounts, setCodeCounts] = useState<Record<string, { total: number; available: number }>>({});
+  const [importingFor, setImportingFor] = useState<string | null>(null);
+  const [importText, setImportText] = useState('');
+  const [importLoading, setImportLoading] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
+
+  const [redemptionLogs, setRedemptionLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+
   useEffect(() => { loadAll(); }, []);
 
   async function loadAll() {
     setLoading(true);
-    await Promise.all([loadLeaders(), loadRewards(), loadMembers()]);
+    await Promise.all([loadLeaders(), loadRewards(), loadMembers(), loadCodeCounts()]);
     setLoading(false);
+  }
+
+  async function loadCodeCounts() {
+    try {
+      const r = await fetch('/api/reward-products?codes=true', { headers: { 'x-admin-token': getAdminToken() } });
+      if (!r.ok) return;
+      const codes: any[] = await r.json();
+      const counts: Record<string, { total: number; available: number }> = {};
+      for (const c of codes) {
+        if (!counts[c.reward_id]) counts[c.reward_id] = { total: 0, available: 0 };
+        counts[c.reward_id].total++;
+        if (!c.redeemed_by) counts[c.reward_id].available++;
+      }
+      setCodeCounts(counts);
+    } catch { /* ignore */ }
+  }
+
+  async function importBulkCodes(rewardId: string) {
+    const codes = importText.split('\n').map((c: string) => c.trim()).filter(Boolean);
+    if (!codes.length) return;
+    setImportLoading(true); setImportMsg('');
+    try {
+      const r = await fetch('/api/reward-products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
+        body: JSON.stringify({ action: 'import-codes', reward_id: rewardId, codes }),
+      });
+      const d = await r.json();
+      if (r.ok) { setImportMsg(`✓ Imported ${d.imported} codes`); setImportText(''); await loadCodeCounts(); }
+      else setImportMsg(`Error: ${d.error}`);
+    } catch { setImportMsg('Request failed'); } finally { setImportLoading(false); }
+  }
+
+  async function loadRedemptionLogs() {
+    setLogsLoading(true);
+    try {
+      const r = await fetch('/api/admin?action=redemption-logs', { headers: { 'x-admin-token': getAdminToken() } });
+      if (r.ok) setRedemptionLogs(await r.json());
+    } catch { /* ignore */ } finally { setLogsLoading(false); }
   }
 
   async function loadLeaders() {
@@ -120,6 +168,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
     { key: 'manage', label: 'Manage Tokens' },
     { key: 'rewards', label: 'Reward Products' },
     { key: 'leaderboard', label: 'Leaderboards' },
+    { key: 'logs', label: 'Redemption Logs' },
   ];
 
   return (
