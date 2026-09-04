@@ -23,7 +23,7 @@ async function svcQuery<T>(table: string, filters: Record<string, unknown>, sele
   if (extra) qs.set('order', extra);
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, { headers: svcH() });
   if (!r.ok) return [];
-  return r.json();
+  return r.json() as Promise<T[]>;
 }
 
 async function svcGetOne<T>(table: string, filters: Record<string, unknown>, select: string): Promise<T | null> {

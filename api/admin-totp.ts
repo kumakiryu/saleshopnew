@@ -83,7 +83,7 @@ async function svcGet<T>(table: string, filters: Record<string, unknown>, select
 async function svcGetAll<T>(table: string, select = '*'): Promise<T[]> {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=${select}`, { headers: svcH() });
   if (!r.ok) return [];
-  return r.json();
+  return r.json() as Promise<T[]>;
 }
 
 async function svcUpdate(table: string, filters: Record<string, unknown>, data: unknown): Promise<void> {
@@ -110,7 +110,7 @@ async function svcDelete(table: string, filters: Record<string, unknown>): Promi
 async function svcGetUserById(userId: string): Promise<{ email?: string } | null> {
   const r = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, { headers: svcH() });
   if (!r.ok) return null;
-  return r.json();
+  return r.json() as Promise<{ email?: string }>;
 }
 
 async function getAdminUser(token: string): Promise<{ user: { id: string; email: string }; admin: Record<string, unknown> } | null> {
