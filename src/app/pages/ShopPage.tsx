@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { useStore } from '@/lib/store';
 import { useAnnouncements } from '@/lib/useAnnouncements';
 import { CATEGORY_STYLE, renderContent } from './AnnouncementsPage';
+import { useCustomerAuth, tierPrice, tierLabel, tierColor, type CustomerTier } from '@/lib/customerAuth';
 import type { Product } from '@/lib/types';
 
 /* ── Cart Bubble ─────────────────────────────────────────────── */
@@ -231,6 +232,35 @@ function Background() {
   );
 }
 
+function AccountBadge() {
+  const navigate = useNavigate();
+  const { user, signOut } = useCustomerAuth();
+  if (!user) return null;
+  const tier = user.tier as CustomerTier;
+  const color = tierColor(tier) || '#00BFFF';
+  const label = tierLabel(tier);
+  return (
+    <div className="fixed top-4 right-4 z-40 flex items-center gap-2">
+      {label && (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest"
+          style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>
+          {label}
+        </span>
+      )}
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
+        <span className="text-[11px] max-w-[120px] truncate" style={{ color: '#7b88c0' }}>{user.email}</span>
+        <button onClick={signOut}
+          className="text-[10px] px-1.5 py-0.5 rounded-md"
+          style={{ color: '#FF6B6B', background: 'transparent', border: 'none', cursor: 'pointer', opacity: 0.7 }}
+          title="Sign out">
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function DiscordCTA({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
   const lg = size === 'lg';
   return (
@@ -258,6 +288,8 @@ export default function ShopPage() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { addToCart, cartItems } = useStore();
+  const { user: cusUser } = useCustomerAuth();
+  const cusTier = cusUser?.tier ?? 'normal';
   const [page, setPage] = useState<'home' | 'stock'>(pathname === '/stock' ? 'stock' : 'home');
   const [dir, setDir] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -301,6 +333,7 @@ export default function ShopPage() {
       <style>{CSS}</style>
       <Background />
       <CartBubble />
+      <AccountBadge />
 
       <AnimatePresence mode="wait" custom={dir}>
         {page === 'home' ? (
@@ -331,49 +364,67 @@ export default function ShopPage() {
                 Digital Products&nbsp;&nbsp;•&nbsp;&nbsp;Fast Delivery&nbsp;&nbsp;•&nbsp;&nbsp;Trusted Service
               </motion.p>
 
-              <motion.div className="flex flex-col items-center gap-3 w-full"
+              <motion.div className="flex flex-col items-center gap-4 w-full"
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}>
-                <DiscordCTA size="lg" />
                 <div className="flex flex-col items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => goTo('stock')}
-                      className="btn-ghost inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm select-none focus-visible:outline-none"
-                      style={{ color: '#7b88c0', background: 'transparent' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="7" width="20" height="14" rx="2" />
-                        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-                        <line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" />
-                      </svg>
-                      <span style={{ fontFamily: "'Rajdhani', 'Inter', sans-serif", fontWeight: 600, letterSpacing: '0.06em' }}>Browse Stock</span>
-                    </button>
-                    <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.08)' }} />
+                  {/* BUY NOW — primary CTA */}
+                  <button onClick={() => goTo('stock')}
+                    className="btn-primary inline-flex items-center gap-3 px-10 py-4 rounded-xl select-none focus-visible:outline-none"
+                    style={{ color: '#ffffff' }}>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="btn-icon">
+                      <rect x="2" y="7" width="20" height="14" rx="2" />
+                      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                      <line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" />
+                    </svg>
+                    <span style={{ fontFamily: "'Rajdhani', 'Inter', sans-serif", fontWeight: 800, letterSpacing: '0.08em', fontSize: '1.05rem' }}>BUY NOW</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="btn-arrow">
+                      <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  </button>
+                  {/* Secondary row */}
+                  <div className="flex items-center gap-1">
                     <button onClick={() => navigate('/announcements')}
-                      className="btn-ghost inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm select-none focus-visible:outline-none"
+                      className="btn-ghost inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm select-none focus-visible:outline-none"
                       style={{ color: '#7b88c0', background: 'transparent' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
                       </svg>
                       <span style={{ fontFamily: "'Rajdhani', 'Inter', sans-serif", fontWeight: 600, letterSpacing: '0.06em' }}>Announcements</span>
                     </button>
                     <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.08)' }} />
                     <button onClick={() => setShowPayments(p => !p)}
-                      className="btn-ghost inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm select-none focus-visible:outline-none"
+                      className="btn-ghost inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm select-none focus-visible:outline-none"
                       style={{ color: showPayments ? '#c8d0f0' : '#7b88c0', background: showPayments ? 'rgba(0,191,255,0.05)' : 'transparent', borderColor: showPayments ? 'rgba(0,191,255,0.2)' : undefined }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
                       </svg>
                       <span style={{ fontFamily: "'Rajdhani', 'Inter', sans-serif", fontWeight: 600, letterSpacing: '0.06em' }}>Payments</span>
                     </button>
+                    <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.08)' }} />
+                    {/* Login button */}
+                    <button onClick={() => navigate('/vip')}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm select-none focus-visible:outline-none"
+                      style={{ color: '#c8d0f0', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', fontWeight: 600 }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+                      </svg>
+                      <span style={{ fontFamily: "'Rajdhani', 'Inter', sans-serif", letterSpacing: '0.06em' }}>Login</span>
+                    </button>
                   </div>
+                  {/* Discord — tertiary, subtle link below the main CTA group */}
+                  <a href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs"
+                    style={{ color: '#5865F2', background: 'rgba(88,101,242,0.08)', border: '1px solid rgba(88,101,242,0.2)', textDecoration: 'none', fontWeight: 600, letterSpacing: '0.04em' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                      <path d={DISCORD_PATH} />
+                    </svg>
+                    Join our Discord Server
+                  </a>
 
                   {/* Payment methods popover */}
                   {showPayments && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                      transition={{ duration: 0.18 }}
+                    <div
                       className="flex flex-col items-center gap-3 px-5 py-4 rounded-2xl"
                       style={{
                         background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
@@ -398,7 +449,7 @@ export default function ShopPage() {
                       <p className="text-[10px] text-center" style={{ color: '#2e3a5a', letterSpacing: '0.04em' }}>
                         Inquire in the server for more payment methods
                       </p>
-                    </motion.div>
+                    </div>
                   )}
                 </div>
               </motion.div>
@@ -524,13 +575,31 @@ export default function ShopPage() {
                                 {/* Body */}
                                 <div className="flex flex-col flex-1 p-4 gap-3">
                                   <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                       <h3 className="text-sm font-bold leading-tight" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{item.name}</h3>
                                       {item.description && (
                                         <p className="text-[11px] mt-0.5 line-clamp-2" style={{ color: '#3a4570' }}>{item.description}</p>
                                       )}
                                     </div>
-                                    <span className="text-base font-bold flex-shrink-0" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>₱{item.price}</span>
+                                    <div className="flex-shrink-0 text-right">
+                                      {cusTier !== 'normal' && tierPrice(item.price, item.vip_price, item.reseller_price, cusTier) !== item.price ? (
+                                        <>
+                                          <div className="text-[11px] line-through" style={{ color: '#3a4570' }}>₱{item.price}</div>
+                                          <div className="text-base font-bold" style={{ color: tierColor(cusTier), fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+                                            ₱{tierPrice(item.price, item.vip_price, item.reseller_price, cusTier)}
+                                          </div>
+                                          <div className="text-[9px] font-bold px-1 rounded" style={{ color: tierColor(cusTier), background: `${tierColor(cusTier)}18` }}>
+                                            {tierLabel(cusTier)}
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span className="text-base font-bold" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>₱{item.price}</span>
+                                          {item.vip_price && <div className="text-[10px]" style={{ color: '#FFB40099' }}>VIP ₱{item.vip_price}</div>}
+                                          {item.reseller_price && <div className="text-[10px]" style={{ color: '#00E67699' }}>Reseller ₱{item.reseller_price}</div>}
+                                        </>
+                                      )}
+                                    </div>
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <StockBadge stock={item.stock} />

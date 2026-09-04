@@ -10,6 +10,8 @@ import CodeInventoryPanel from './admin/CodeInventoryPanel';
 import AccountInventoryPanel from './admin/AccountInventoryPanel';
 import VaultGuard from './admin/VaultGuard';
 import AdminSettingsPanel from './admin/AdminSettingsPanel';
+import MembersPanel from './admin/MembersPanel';
+import EmailCenterPanel from './admin/EmailCenterPanel';
 import { isVaultUnlocked } from '@/lib/vault';
 
 /* ─────────────────────────────────────────────────────── types */
@@ -57,8 +59,45 @@ const ADMIN_CSS = `
     transition: all 0.15s;
   }
   .a-stock-plus:hover:not(:disabled) { background: rgba(0,191,255,0.16); }
+  .nav-item { display:flex; align-items:center; gap:9px; padding:7px 12px; border-radius:7px; margin:1px 8px; font-size:13px; font-weight:500; color:#4a5580; cursor:pointer; transition:all 0.15s; background:transparent; border:none; text-align:left; width:calc(100% - 16px); }
+  .nav-item:hover { background:rgba(255,255,255,0.04); color:#9ba8c8; }
+  .nav-item.active { background:rgba(0,191,255,0.1); color:#e8eaf6; }
+  .nav-section-label { font-size:9px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:#2e3a5a; padding:12px 22px 4px; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 `;
+
+/* ─────────────────────────────────────────────────────── icons */
+const SvgIc = ({ children, size = 14 }: { children: React.ReactNode; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>{children}</svg>
+);
+const IcGrid   = () => <SvgIc><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></SvgIc>;
+const IcOrders = () => <SvgIc><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></SvgIc>;
+const IcBox    = () => <SvgIc><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></SvgIc>;
+const IcBell   = () => <SvgIc><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></SvgIc>;
+const IcUsers  = () => <SvgIc><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></SvgIc>;
+const IcMail   = () => <SvgIc><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></SvgIc>;
+const IcCode   = () => <SvgIc><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></SvgIc>;
+const IcDb     = () => <SvgIc><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></SvgIc>;
+const IcGear   = () => <SvgIc><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></SvgIc>;
+
+function NavSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return <div><div className="nav-section-label">{label}</div>{children}</div>;
+}
+function NavItem({ icon, label, active, onClick, badge }: { icon: React.ReactNode; label: string; active: boolean; onClick: () => void; badge?: number }) {
+  return (
+    <button className={`nav-item${active ? ' active' : ''}`} onClick={onClick}>
+      {icon}
+      <span style={{ flex: 1 }}>{label}</span>
+      {badge != null && badge > 0 && (
+        <span style={{ background: '#FF8C00', color: '#fff', borderRadius: 99, fontSize: 9, fontWeight: 700, padding: '1px 5px' }}>{badge}</span>
+      )}
+    </button>
+  );
+}
+
+type Tab = 'dashboard' | 'products' | 'orders' | 'announcements' | 'codes' | 'accounts' | 'settings' | 'members' | 'emails';
+const TAB_TITLES: Record<Tab, string> = { dashboard: 'Dashboard', orders: 'Orders', products: 'All Products', announcements: 'Announcements', codes: 'Code Inventory', accounts: 'Account Inventory', members: 'Members', emails: 'Email Center', settings: 'Settings' };
+const TAB_SUBTITLES: Record<Tab, string> = { dashboard: 'Overview of your store performance.', orders: 'Track and manage customer orders.', products: 'Manage your product catalog and stock.', announcements: 'Post and manage store announcements.', codes: 'Manage digital code inventory (vault-protected).', accounts: 'Manage account credentials inventory (vault-protected).', members: 'Manage VIP and Reseller memberships.', emails: 'Monitor email delivery logs.', settings: 'Configure store and admin settings.' };
 
 /* ─────────────────────────────────────────────────────── helpers */
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
@@ -151,14 +190,16 @@ function ProductModal({ product, onClose, categories }: ModalProps) {
   const { upsertProduct } = useStore();
   const isEdit = !!product;
   const [form, setForm] = useState({
-    name:         product?.name         ?? '',
-    description:  product?.description  ?? '',
-    image_url:    product?.image_url    ?? '',
-    download_url: product?.download_url ?? '',
-    price:        product?.price?.toString()  ?? '',
-    category:     product?.category     ?? '',
-    stock:        product?.stock?.toString()  ?? '0',
-    product_type: product?.product_type ?? 'physical',
+    name:           product?.name           ?? '',
+    description:    product?.description    ?? '',
+    image_url:      product?.image_url      ?? '',
+    download_url:   product?.download_url   ?? '',
+    price:          product?.price?.toString()          ?? '',
+    vip_price:      product?.vip_price?.toString()      ?? '',
+    reseller_price: product?.reseller_price?.toString() ?? '',
+    category:       product?.category       ?? '',
+    stock:          product?.stock?.toString()          ?? '0',
+    product_type:   product?.product_type   ?? 'physical',
   });
   const [isNewCat, setIsNewCat] = useState(
     !!product?.category && !categories.includes(product.category)
@@ -172,15 +213,17 @@ function ProductModal({ product, onClose, categories }: ModalProps) {
     if (!form.name.trim()) return setError('Name is required');
     setLoading(true); setError('');
     const payload = {
-      name:         form.name.trim(),
-      description:  form.description.trim()  || null,
-      image_url:    form.image_url.trim()    || null,
-      download_url: form.product_type === 'digital_download' ? (form.download_url.trim() || null) : null,
-      price:        parseFloat(form.price)   || 0,
-      category:     form.category.trim()     || null,
-      stock:        parseInt(form.stock)     || 0,
-      product_type: form.product_type,
-      updated_at:   new Date().toISOString(),
+      name:           form.name.trim(),
+      description:    form.description.trim()    || null,
+      image_url:      form.image_url.trim()      || null,
+      download_url:   form.product_type === 'digital_download' ? (form.download_url.trim() || null) : null,
+      price:          parseFloat(form.price)     || 0,
+      vip_price:      form.vip_price      ? (parseFloat(form.vip_price)      || null) : null,
+      reseller_price: form.reseller_price ? (parseFloat(form.reseller_price) || null) : null,
+      category:       form.category.trim()       || null,
+      stock:          parseInt(form.stock)       || 0,
+      product_type:   form.product_type,
+      updated_at:     new Date().toISOString(),
     };
     try {
       if (isEdit) {
@@ -266,8 +309,19 @@ function ProductModal({ product, onClose, categories }: ModalProps) {
               )}
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] uppercase tracking-widest" style={{ color: '#7b88c0' }}>Price (₱)</label>
+              <label className="text-[10px] uppercase tracking-widest" style={{ color: '#7b88c0' }}>Regular Price (₱)</label>
               <input type="number" min="0" step="0.01" className="a-input px-3 py-2.5 rounded-lg text-sm" value={form.price} onChange={e => set('price', e.target.value)} placeholder="0" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] uppercase tracking-widest" style={{ color: '#FFB400' }}>VIP Price (₱) <span style={{ color: '#3a4570' }}>optional</span></label>
+              <input type="number" min="0" step="0.01" className="a-input px-3 py-2.5 rounded-lg text-sm" value={form.vip_price} onChange={e => set('vip_price', e.target.value)} placeholder="Leave blank = no VIP price" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] uppercase tracking-widest" style={{ color: '#00E676' }}>Reseller Price (₱) <span style={{ color: '#3a4570' }}>optional</span></label>
+              <input type="number" min="0" step="0.01" className="a-input px-3 py-2.5 rounded-lg text-sm" value={form.reseller_price} onChange={e => set('reseller_price', e.target.value)} placeholder="Leave blank = no reseller price" />
             </div>
           </div>
 
@@ -636,17 +690,19 @@ function AnnouncementsPanel({ adminEmail }: { adminEmail: string }) {
 function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => void }) {
   const { products, setProducts, upsertProduct, removeProduct, orders, setOrders, upsertOrder, removeOrder } = useStore();
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'products' | 'orders' | 'announcements' | 'codes' | 'accounts' | 'settings'>('products');
+  const [tab, setTab] = useState<Tab>('orders');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [adminRole, setAdminRole] = useState('administrator');
   const [vaultOpen, setVaultOpen] = useState(isVaultUnlocked());
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
 
-  const TAB_ACCESS: Record<string, Array<typeof tab>> = {
-    owner:         ['products', 'orders', 'announcements', 'codes', 'accounts', 'settings'],
-    administrator: ['products', 'orders', 'announcements', 'codes', 'accounts', 'settings'],
-    moderator:     ['products', 'orders', 'announcements'],
+  const TAB_ACCESS: Record<string, Tab[]> = {
+    owner:         ['dashboard','products','orders','announcements','codes','accounts','members','emails','settings'],
+    administrator: ['dashboard','products','orders','announcements','codes','accounts','members','emails','settings'],
+    moderator:     ['dashboard','products','orders','announcements'],
   };
   const allowedTabs = TAB_ACCESS[adminRole] ?? TAB_ACCESS.administrator;
 
@@ -689,10 +745,10 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
     return () => { clearInterval(vaultPoll); clearInterval(dataPoll); };
   }, []);
 
-  // Refresh vault state when switching tabs (e.g. user unlocked vault in codes tab, now viewing orders)
-  function switchTab(t: typeof tab) {
+  function switchTab(t: Tab) {
     setVaultOpen(isVaultUnlocked());
     setTab(t);
+    setSidebarOpen(false);
     if (t === 'settings') loadMaintenanceMode();
   }
 
@@ -740,6 +796,13 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
   async function cancelOrder(orderId: string) {
     if (!window.confirm('Cancel this order?')) return;
     await updateOrderStatus(orderId, 'cancelled');
+  }
+
+  async function deleteOrder(orderId: string) {
+    if (!window.confirm('Permanently delete this order? This cannot be undone.')) return;
+    removeOrder(orderId);
+    await supabase.from('order_items').delete().eq('order_id', orderId);
+    await supabase.from('orders').delete().eq('id', orderId);
   }
 
   async function loadMaintenanceMode() {
@@ -842,100 +905,182 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
     } finally { setSendingEmail(null); }
   }
 
-  return (
-    <div className="min-h-screen" style={{ background: '#050816', fontFamily: "'Inter', sans-serif" }}>
-      <style>{ADMIN_CSS}</style>
+  const rc = ROLE_COLOR[adminRole] ?? '#7b88c0';
+  const pendingOrders = orders.filter(o => o.status === 'pending').length;
 
-      {/* ── Top bar ── */}
-      <div className="sticky top-0 z-40 px-6 py-4 flex items-center justify-between"
-        style={{ borderBottom: '1px solid rgba(0,191,255,0.08)', background: 'rgba(5,8,22,0.96)', backdropFilter: 'blur(12px)' }}>
-        <div className="flex items-center gap-3">
-          <div className="w-1 h-6 rounded-full" style={{ background: 'linear-gradient(to bottom, #00BFFF, #8A2BE2)' }} />
-          <span className="font-bold tracking-widest text-sm uppercase" style={{ color: '#fff', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>
-            Sale Shop Admin
-          </span>
-          <span className="hidden sm:block text-[10px] px-2 py-0.5 rounded" style={{ background: 'rgba(255,68,68,0.1)', color: '#FF6B6B', border: '1px solid rgba(255,68,68,0.2)' }}>
-            STAFF ONLY
-          </span>
+  const SidebarContent = () => (
+    <div style={{ width: 240, height: '100%', background: '#111115', borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 9, background: 'linear-gradient(135deg,#00BFFF,#8A2BE2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <IcGrid />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: "\'Rajdhani\',\'Inter\',sans-serif", letterSpacing: '0.08em' }}>SALE SHOP</div>
+            <div style={{ fontSize: 9, color: '#3a4570', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Admin Panel</div>
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="hidden sm:block text-xs" style={{ color: '#3a4570' }}>{user.email}</span>
-          <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide"
-            style={{ background: `${ROLE_COLOR[adminRole] ?? '#7b88c0'}14`, color: ROLE_COLOR[adminRole] ?? '#7b88c0', border: `1px solid ${ROLE_COLOR[adminRole] ?? '#7b88c0'}35` }}>
-            {adminRole}
-          </span>
-          <button onClick={onLogout} className="text-xs px-3 py-1.5 rounded-lg uppercase tracking-wider font-semibold"
-            style={{ border: '1px solid rgba(255,68,68,0.25)', color: '#FF6B6B', background: 'transparent', transition: 'all 0.2s' }}>
-            Logout
+      </div>
+      <nav style={{ flex: 1, overflowY: 'auto', paddingBottom: 8 }}>
+        <NavSection label="Quick Use">
+          <NavItem icon={<IcOrders />} label="Orders" active={tab === 'orders'} onClick={() => switchTab('orders')} badge={pendingOrders || undefined} />
+          <NavItem icon={<IcBox />} label="All Products" active={tab === 'products'} onClick={() => switchTab('products')} />
+        </NavSection>
+        <NavSection label="Home">
+          <NavItem icon={<IcGrid />} label="Dashboard" active={tab === 'dashboard'} onClick={() => switchTab('dashboard')} />
+        </NavSection>
+        {allowedTabs.some(t => ['announcements','members','emails'].includes(t)) && (
+          <NavSection label="Manage">
+            {allowedTabs.includes('announcements') && <NavItem icon={<IcBell />} label="Announcements" active={tab === 'announcements'} onClick={() => switchTab('announcements')} />}
+            {allowedTabs.includes('members') && <NavItem icon={<IcUsers />} label="Members" active={tab === 'members'} onClick={() => switchTab('members')} />}
+            {allowedTabs.includes('emails') && <NavItem icon={<IcMail />} label="Email Center" active={tab === 'emails'} onClick={() => switchTab('emails')} />}
+          </NavSection>
+        )}
+        {allowedTabs.some(t => ['codes','accounts','settings'].includes(t)) && (
+          <NavSection label="Advanced">
+            {allowedTabs.includes('codes') && <NavItem icon={<IcCode />} label="Code Inventory" active={tab === 'codes'} onClick={() => switchTab('codes')} />}
+            {allowedTabs.includes('accounts') && <NavItem icon={<IcDb />} label="Acct Inventory" active={tab === 'accounts'} onClick={() => switchTab('accounts')} />}
+            {allowedTabs.includes('settings') && <NavItem icon={<IcGear />} label="Settings" active={tab === 'settings'} onClick={() => switchTab('settings')} />}
+          </NavSection>
+        )}
+      </nav>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: `${rc}20`, border: `1px solid ${rc}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: rc, flexShrink: 0 }}>{user.email[0].toUpperCase()}</div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 11, color: '#9ba8c8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</div>
+            <div style={{ fontSize: 9, color: rc, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>{adminRole}</div>
+          </div>
+          <button onClick={onLogout} title="Logout" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3a4570', padding: 4, display: 'flex', alignItems: 'center', flexShrink: 0 }}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = '#FF6B6B')}
+            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = '#3a4570')}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </button>
         </div>
       </div>
+    </div>
+  );
 
-      <div className="px-4 sm:px-6 py-8 max-w-7xl mx-auto">
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#0d0d0f', fontFamily: "\'Inter\',sans-serif" }}>
+      <style>{ADMIN_CSS}</style>
 
-        {/* ── Stats ── */}
-        <motion.div className="flex flex-wrap gap-3 mb-8"
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <StatCard label="Total Products"       value={products.length}  color="#00BFFF" />
-          <StatCard label="Total Stock"          value={totalStock}       color="#00E676" />
-          <StatCard label="Low Stock"            value={lowStock}         color="#FF8C00" />
-          <StatCard label="Out of Stock"         value={outOfStock}       color="#FF4444" />
-          {waitingOrders > 0 && (
-            <StatCard label="Awaiting Inventory" value={waitingOrders}    color="#FF8C00" />
-          )}
-        </motion.div>
-
-        {/* ── Payment provider analytics ── */}
-        {providerStats.some(p => p.count > 0) && (
-          <motion.div className="flex flex-wrap gap-3 mb-8"
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }}>
-            {providerStats.filter(p => p.count > 0).map(({ pm, count, revenue, successRate }) => {
-              const color = PROVIDER_COLORS[pm];
-              return (
-                <div key={pm} className="flex-1 min-w-[150px] p-4 rounded-xl"
-                  style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: `1px solid ${color}22` }}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
-                    <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color, fontFamily: "'Rajdhani','Inter',sans-serif" }}>
-                      {PROVIDER_LABELS[pm]}
-                    </span>
-                  </div>
-                  <p className="text-xl font-bold mb-0.5" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
-                    ₱{revenue.toLocaleString()}
-                  </p>
-                  <p className="text-[10px]" style={{ color: '#3a4570' }}>
-                    {count} orders · {successRate}% success
-                  </p>
-                </div>
-              );
-            })}
-          </motion.div>
-        )}
-
-        {/* ── Tab switcher ── */}
-        <div className="flex gap-1 mb-6 p-1 rounded-xl w-fit"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          {allowedTabs.map(t => {
-            const pendingCount = t === 'orders' ? orders.filter(o => o.status === 'pending').length : 0;
-            const label = t === 'codes' ? 'Code Inv.' : t === 'accounts' ? 'Acct Inv.' : t.charAt(0).toUpperCase() + t.slice(1);
-            return (
-              <button key={t} onClick={() => switchTab(t)}
-                className="relative px-5 py-2 rounded-lg text-xs font-bold tracking-widest uppercase transition-all"
-                style={{
-                  fontFamily: "'Rajdhani', 'Inter', sans-serif",
-                  background: tab === t ? 'linear-gradient(135deg, rgba(0,191,255,0.14) 0%, rgba(138,43,226,0.12) 100%)' : 'transparent',
-                  border: `1px solid ${tab === t ? 'rgba(0,191,255,0.28)' : 'transparent'}`,
-                  color: tab === t ? '#00BFFF' : '#3a4570',
-                }}>
-                {label}
-                {pendingCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold"
-                    style={{ background: '#FF8C00', color: '#fff' }}>{pendingCount}</span>
-                )}
-              </button>
-            );
-          })}
+      {sidebarOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setSidebarOpen(false)} />
+          <div style={{ position: 'relative', zIndex: 1 }}><SidebarContent /></div>
         </div>
+      )}
+
+      <div className="hidden md:block" style={{ height: '100vh', flexShrink: 0 }}><SidebarContent /></div>
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+
+        <div style={{ height: 56, flexShrink: 0, background: '#111115', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px' }}>
+
+          <div style={{ flex: 1 }} />
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setBellOpen(b => !b)} style={{ background: bellOpen ? 'rgba(0,191,255,0.1)' : 'none', border: bellOpen ? '1px solid rgba(0,191,255,0.25)' : '1px solid transparent', cursor: 'pointer', padding: '5px 7px', borderRadius: 8, color: bellOpen ? '#00BFFF' : '#4a5580', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}>
+              <IcBell size={15} />
+            </button>
+            {pendingOrders > 0 && !bellOpen && (
+              <span style={{ position: 'absolute', top: 1, right: 1, minWidth: 16, height: 16, borderRadius: 99, background: '#FF4444', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', pointerEvents: 'none' }}>{Math.min(pendingOrders, 9)}+</span>
+            )}
+            {bellOpen && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setBellOpen(false)} />
+                <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 320, maxHeight: 420, overflowY: 'auto', background: '#16161a', border: '1px solid rgba(0,191,255,0.2)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 50 }}>
+                  <div style={{ padding: '12px 16px 8px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#7b88c0', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Pending Orders</span>
+                    {pendingOrders > 0 && <span style={{ fontSize: 10, background: '#FF4444', color: '#fff', borderRadius: 99, padding: '1px 6px', fontWeight: 700 }}>{pendingOrders}</span>}
+                  </div>
+                  {orders.filter(o => o.status === 'pending' || o.status === 'processing').length === 0 ? (
+                    <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12, color: '#3a4570' }}>No pending orders</div>
+                  ) : (
+                    orders.filter(o => o.status === 'pending' || o.status === 'processing').map(o => {
+                      const sc = o.status === 'pending' ? '#FF8C00' : '#00BFFF';
+                      return (
+                        <button key={o.id} onClick={() => { setBellOpen(false); switchTab('orders'); }}
+                          style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }}
+                          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)')}
+                          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'none')}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#c8d0f0' }}>{o.customer_name}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>&#x20B1;{Number(o.total).toLocaleString()}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 10, color: '#3a4570' }}>{o.customer_email}</span>
+                            <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: `${sc}18`, color: sc, border: `1px solid ${sc}40`, textTransform: 'uppercase' }}>{o.status}</span>
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                  {orders.filter(o => o.status === 'pending' || o.status === 'processing').length > 0 && (
+                    <button onClick={() => { setBellOpen(false); switchTab('orders'); }}
+                      style={{ width: '100%', padding: '10px 16px', background: 'rgba(0,191,255,0.05)', border: 'none', borderTop: '1px solid rgba(0,191,255,0.1)', cursor: 'pointer', fontSize: 12, color: '#00BFFF', fontWeight: 600, textAlign: 'center' }}>
+                      View all orders →
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 24px 40px' }}>
+          <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} style={{ marginBottom: 24 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#fff', fontFamily: "\'Rajdhani\',\'Inter\',sans-serif", marginBottom: 4 }}>{TAB_TITLES[tab]}</h1>
+            <p style={{ fontSize: 13, color: '#4a5580' }}>{TAB_SUBTITLES[tab]}</p>
+          </motion.div>
+
+          {tab === 'dashboard' && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="flex flex-wrap gap-3 mb-6">
+                <StatCard label="Total Products" value={products.length} color="#00BFFF" />
+                <StatCard label="Total Stock" value={totalStock} color="#00E676" />
+                <StatCard label="Low Stock" value={lowStock} color="#FF8C00" />
+                <StatCard label="Out of Stock" value={outOfStock} color="#FF4444" />
+                <StatCard label="Total Orders" value={orders.length} color="#8A2BE2" />
+                {waitingOrders > 0 && <StatCard label="Awaiting Inventory" value={waitingOrders} color="#FF8C00" />}
+              </div>
+              {providerStats.some(p => p.count > 0) && (
+                <div className="flex flex-wrap gap-3 mb-6">
+                  {providerStats.filter(p => p.count > 0).map(({ pm, count, revenue, successRate }) => {
+                    const pColor = PROVIDER_COLORS[pm];
+                    return (
+                      <div key={pm} className="flex-1 min-w-[150px] p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${pColor}22` }}>
+                        <div className="flex items-center gap-2 mb-2"><div className="w-1.5 h-1.5 rounded-full" style={{ background: pColor }} /><span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: pColor }}>{PROVIDER_LABELS[pm]}</span></div>
+                        <p className="text-xl font-bold mb-0.5" style={{ color: '#fff', fontFamily: "\'Rajdhani\',\'Inter\',sans-serif" }}>&#x20B1;{revenue.toLocaleString()}</p>
+                        <p className="text-[10px]" style={{ color: '#3a4570' }}>{count} orders &middot; {successRate}% success</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#7b88c0' }}>Recent Orders</span>
+                  <button onClick={() => switchTab('orders')} style={{ color: '#00BFFF', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12 }}>View all &#x2192;</button>
+                </div>
+                {orders.slice(0, 5).map(o => {
+                  const dash_sc = ({ pending: '#FF8C00', processing: '#00BFFF', paid: '#8A2BE2', delivering: '#00BFFF', delivered: '#00E676', waiting_for_inventory: '#FF8C00', failed: '#FF4444', cancelled: '#FF4444' } as Record<string,string>)[o.status] ?? '#7b88c0';
+                  return (
+                    <div key={o.id} className="a-row flex items-center gap-4 px-6 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p className="text-sm font-semibold truncate" style={{ color: '#c8d0f0', fontFamily: "\'Rajdhani\',\'Inter\',sans-serif" }}>{o.customer_name}</p>
+                        <p className="text-[10px]" style={{ color: '#2e3a5a' }}>{o.customer_email}</p>
+                      </div>
+                      <span className="text-sm font-bold" style={{ color: '#fff', fontFamily: "\'Rajdhani\',\'Inter\',sans-serif" }}>&#x20B1;{Number(o.total).toLocaleString()}</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest" style={{ background: `${dash_sc}18`, color: dash_sc, border: `1px solid ${dash_sc}40` }}>{o.status}</span>
+                      <span className="text-xs hidden sm:block" style={{ color: '#3a4570' }}>{format(new Date(o.created_at), 'MMM d, h:mm a')}</span>
+                    </div>
+                  );
+                })}
+                {orders.length === 0 && <div className="px-6 py-8 text-center text-xs" style={{ color: '#2e3a5a' }}>No orders yet.</div>}
+              </div>
+            </motion.div>
+          )}
 
         {/* ── Products panel ── */}
         {tab === 'products' && (
@@ -1146,6 +1291,12 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
                             Cancel
                           </button>
                         )}
+                        <button onClick={() => deleteOrder(o.id)}
+                          className="px-2.5 py-1.5 rounded-lg text-[10px] font-semibold"
+                          style={{ background: 'rgba(120,0,0,0.15)', border: '1px solid rgba(180,0,0,0.3)', color: '#cc4444' }}
+                          title="Delete order permanently">
+                          🗑
+                        </button>
                       </div>
 
                       {/* Expand toggle */}
@@ -1246,6 +1397,32 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
           </motion.div>
         )}
 
+        {tab === 'members' && (
+          <motion.div className="rounded-2xl p-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
+            style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>MEMBERS</h2>
+                <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: '#2e3a5a' }}>Manage VIP & Reseller accounts</p>
+              </div>
+            </div>
+            <MembersPanel adminId={user.id} />
+          </motion.div>
+        )}
+
+        {tab === 'emails' && (
+          <motion.div className="rounded-2xl p-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
+            style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>EMAIL CENTER</h2>
+                <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: '#2e3a5a' }}>Delivery monitoring · auto-refreshes every 10s</p>
+              </div>
+            </div>
+            <EmailCenterPanel />
+          </motion.div>
+        )}
+
         {tab === 'settings' && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
             className="flex flex-col gap-6">
@@ -1306,7 +1483,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
             />
           </motion.div>
         )}
-
+        </div>
       </div>
 
       {modal.open && (
@@ -1319,7 +1496,6 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
     </div>
   );
 }
-
 /* ─────────────────────────────────────────────────────── main */
 export default function AdminPage() {
   const [authState, setAuthState] = useState<AuthState>('checking');

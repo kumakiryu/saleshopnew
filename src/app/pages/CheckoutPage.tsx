@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/lib/store';
+import { useCustomerAuth, tierPrice } from '@/lib/customerAuth';
 
 type PayMethod = 'paymongo' | 'coinbase' | 'coinsph';
 
@@ -50,14 +51,18 @@ const PAYMENT_METHODS: { id: PayMethod; label: string; sublabel: string; tags: s
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cartItems, cartTotal, clearCart, upsertOrder } = useStore();
-  const [form, setForm] = useState({ name: '', email: '', discord: '', notes: '' });
+  const { user: cusUser } = useCustomerAuth();
+  const cusTier = cusUser?.tier ?? 'normal';
+  const [form, setForm] = useState({ name: '', email: cusUser?.email ?? '', discord: '', notes: '' });
   const [payMethod, setPayMethod] = useState<PayMethod>('paymongo');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   function set(k: keyof typeof form, v: string) { setForm(f => ({ ...f, [k]: v })); }
 
-  const total = cartTotal();
+  const total = cartItems.reduce((sum, ci) =>
+    sum + tierPrice(ci.product.price, ci.product.vip_price, ci.product.reseller_price, cusTier) * ci.quantity, 0
+  );
 
   async function placeOrder() {
     if (!form.name.trim())  return setError('Full name is required.');
@@ -77,6 +82,7 @@ export default function CheckoutPage() {
           total,
           status: 'pending',
           payment_method: payMethod,
+          customer_tier: cusTier,
         })
         .select()
         .single();
@@ -89,7 +95,7 @@ export default function CheckoutPage() {
         product_id:   ci.product.id,
         product_name: ci.product.name,
         quantity:     ci.quantity,
-        price:        ci.product.price,
+        price:        tierPrice(ci.product.price, ci.product.vip_price, ci.product.reseller_price, cusTier),
         download_url: ci.product.download_url ?? null,
       }));
 
@@ -277,17 +283,29 @@ export default function CheckoutPage() {
                 <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#00BFFF' }}>Order Summary</p>
               </div>
               <div className="px-5 py-4 flex flex-col gap-3">
-                {cartItems.map(ci => (
-                  <div key={ci.product.id} className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold truncate" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{ci.product.name}</p>
-                      <p className="text-[10px]" style={{ color: '#3a4570' }}>×{ci.quantity}</p>
-                    </div>
-                    <span className="text-xs font-bold flex-shrink-0" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
-                      ₱{(ci.product.price * ci.quantity).toLocaleString()}
-                    </span>
+                {cusTier !== 'normal' && (
+                  <div className="px-2 py-1.5 rounded-lg text-[10px] font-bold mb-1" style={{
+                    background: cusTier === 'vip' ? 'rgba(255,180,0,0.1)' : 'rgba(0,230,118,0.1)',
+                    color: cusTier === 'vip' ? '#FFB400' : '#00E676',
+                    border: `1px solid ${cusTier === 'vip' ? 'rgba(255,180,0,0.25)' : 'rgba(0,230,118,0.2)'}`,
+                  }}>
+                    {cusTier === 'vip' ? '✦ VIP pricing applied' : '◆ Reseller pricing applied'}
                   </div>
-                ))}
+                )}
+                {cartItems.map(ci => {
+                  const itemPrice = tierPrice(ci.product.price, ci.product.vip_price, ci.product.reseller_price, cusTier);
+                  return (
+                    <div key={ci.product.id} className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold truncate" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{ci.product.name}</p>
+                        <p className="text-[10px]" style={{ color: '#3a4570' }}>×{ci.quantity}</p>
+                      </div>
+                      <span className="text-xs font-bold flex-shrink-0" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+                        ₱{(itemPrice * ci.quantity).toLocaleString()}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
               <div className="px-5 py-4 flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                 <span className="text-xs uppercase tracking-widest" style={{ color: '#3a4570' }}>Total</span>

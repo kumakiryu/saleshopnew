@@ -184,6 +184,19 @@ const auth = {
     return { data: { user: json.user, session }, error: null };
   },
 
+  signUp: async ({ email, password }: { email: string; password: string }) => {
+    const res = await fetch(`${BASE}/auth/v1/signup`, {
+      method: 'POST',
+      headers: { 'apikey': publicAnonKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { data: { user: null, session: null }, error: json };
+    const session = json.access_token ? { access_token: json.access_token, user: json.user, ...json } : null;
+    if (session) { persistSession(session); _listeners.forEach(l => l('SIGNED_IN', session)); }
+    return { data: { user: json.user ?? null, session }, error: null };
+  },
+
   signOut: async () => {
     await fetch(`${BASE}/auth/v1/logout`, { method: 'POST', headers: authHeaders() }).catch(() => {});
     persistSession(null);

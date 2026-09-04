@@ -1,4 +1,5 @@
 export type ProductType = 'physical' | 'digital_download' | 'digital_code' | 'account_product';
+export type CustomerTier = 'normal' | 'vip' | 'reseller';
 
 export interface Product {
   id: string;
@@ -7,11 +8,38 @@ export interface Product {
   image_url: string | null;
   download_url: string | null;
   price: number;
+  vip_price: number | null;
+  reseller_price: number | null;
   stock: number;
   category: string | null;
   product_type: ProductType;
   created_at: string;
   updated_at: string;
+}
+
+export interface UserMembership {
+  id: string;
+  user_id: string;
+  tier: CustomerTier;
+  assigned_by: string | null;
+  assigned_at: string;
+}
+
+export interface CustomerUser {
+  id: string;
+  email: string;
+  tier: CustomerTier;
+}
+
+export interface EmailLog {
+  id: string;
+  order_id: string | null;
+  recipient: string;
+  subject: string | null;
+  status: 'sent' | 'failed' | 'delivered';
+  resend_id: string | null;
+  sent_at: string;
+  error: string | null;
 }
 
 export interface ProductCode {

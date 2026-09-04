@@ -179,20 +179,36 @@ function buildEmailHtml(order: Order, items: OrderItem[], deliveries: AssignedDe
 </div></body></html>`;
 }
 
+async function logEmail(orderId: string, recipient: string, subject: string, status: string, resendId?: string, error?: string) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/email_logs`, {
+      method: 'POST',
+      headers: { ...serviceHeaders(), Prefer: 'return=minimal' },
+      body: JSON.stringify({ order_id: orderId, recipient, subject, status, resend_id: resendId ?? null, error: error ?? null, sent_at: new Date().toISOString() }),
+    });
+  } catch { /* non-critical */ }
+}
+
 async function sendEmail(order: Order, items: OrderItem[], deliveries: AssignedDelivery[]) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
   const subject = `Your Purchase Is Ready — Order ${order.id.slice(0, 8).toUpperCase()}`;
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM ?? 'orders@yourdomain.com',
-      to: [order.customer_email],
-      subject,
-      html: buildEmailHtml(order, items, deliveries),
-    }),
-  });
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM ?? 'orders@yourdomain.com',
+        to: [order.customer_email],
+        subject,
+        html: buildEmailHtml(order, items, deliveries),
+      }),
+    });
+    const rj = await r.json().catch(() => ({}));
+    await logEmail(order.id, order.customer_email, subject, r.ok ? 'sent' : 'failed', rj?.id, r.ok ? undefined : JSON.stringify(rj));
+  } catch (e: any) {
+    await logEmail(order.id, order.customer_email, subject, 'failed', undefined, e?.message ?? String(e));
+  }
 }
 
 // ── Shared auth helper ────────────────────────────────────────────────────────

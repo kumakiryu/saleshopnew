@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { useStore } from '@/lib/store';
+import { useCustomerAuth, tierPrice, tierLabel, tierColor } from '@/lib/customerAuth';
 
 const CSS = `
   .cart-input { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #e8eaf6; outline: none; transition: border-color 0.2s; }
@@ -14,7 +15,12 @@ const CSS = `
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const { cartItems, removeFromCart, updateCartQty, clearCart, cartTotal, cartCount } = useStore();
+  const { cartItems, removeFromCart, updateCartQty, clearCart, cartCount } = useStore();
+  const { user: cusUser } = useCustomerAuth();
+  const cusTier = cusUser?.tier ?? 'normal';
+  const tierTotal = cartItems.reduce((sum, ci) =>
+    sum + tierPrice(ci.product.price, ci.product.vip_price ?? null, ci.product.reseller_price ?? null, cusTier) * ci.quantity, 0
+  );
 
   return (
     <div className="min-h-screen" style={{ background: '#050816', fontFamily: "'Inter', sans-serif" }}>
@@ -102,9 +108,14 @@ export default function CartPage() {
                         <button className="qty-btn" onClick={() => updateCartQty(item.product.id, item.quantity + 1)} disabled={item.quantity >= item.product.stock}>+</button>
                       </div>
                       {/* Line total */}
-                      <span className="text-sm font-bold" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
-                        ₱{(item.product.price * item.quantity).toLocaleString()}
-                      </span>
+                      <div className="text-right">
+                        {cusTier !== 'normal' && tierPrice(item.product.price, item.product.vip_price ?? null, item.product.reseller_price ?? null, cusTier) !== item.product.price && (
+                          <p className="text-[10px] line-through" style={{ color: '#3a4570' }}>₱{(item.product.price * item.quantity).toLocaleString()}</p>
+                        )}
+                        <span className="text-sm font-bold" style={{ color: cusTier !== 'normal' ? tierColor(cusTier) || '#ffffff' : '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+                          ₱{(tierPrice(item.product.price, item.product.vip_price ?? null, item.product.reseller_price ?? null, cusTier) * item.quantity).toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -116,8 +127,18 @@ export default function CartPage() {
               style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
               <div className="flex items-center justify-between mb-3 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <span className="text-xs uppercase tracking-widest" style={{ color: '#3a4570' }}>Subtotal</span>
-                <span className="text-xl font-bold" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>₱{cartTotal().toLocaleString()}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs uppercase tracking-widest" style={{ color: '#3a4570' }}>Subtotal</span>
+                  {cusTier !== 'normal' && tierLabel(cusTier) && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider"
+                      style={{ background: `${tierColor(cusTier)}22`, color: tierColor(cusTier), border: `1px solid ${tierColor(cusTier)}44` }}>
+                      {tierLabel(cusTier)}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xl font-bold" style={{ color: cusTier !== 'normal' ? tierColor(cusTier) || '#ffffff' : '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+                  ₱{tierTotal.toLocaleString()}
+                </span>
               </div>
               <p className="text-[10px]" style={{ color: '#2e3a5a' }}>Payment instructions will be provided after checkout.</p>
             </motion.div>
