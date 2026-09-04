@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { RewardProduct, LeaderboardEntry } from '@/lib/types';
+import TokenIcon from '@/app/components/TokenIcon';
 
 interface Props { adminToken: string; }
 
@@ -156,7 +157,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
                 {entries.length === 0 ? <p className="px-5 py-6 text-xs" style={{ color: '#3a4570' }}>No data yet</p> : entries.slice(0, 5).map(e => (
                   <div key={e.user_id} className="flex items-center justify-between px-5 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                     <span className="text-xs" style={{ color: '#7b88c0' }}>#{e.rank} {e.email}</span>
-                    <span className="text-xs font-bold" style={{ color }}>{e.tokens} 🪙</span>
+                    <span className="text-xs font-bold" style={{ color }}>{e.tokens} <TokenIcon size={12} /></span>
                   </div>
                 ))}
               </div>
@@ -251,7 +252,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
               <div key={r.id} className="flex items-center gap-4 px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate" style={{ color: r.active ? '#c8d0f0' : '#3a4570' }}>{r.name}</p>
-                  <p className="text-[10px]" style={{ color: '#3a4570' }}>{r.token_cost} 🪙 · {r.membership_type} · stock: {r.stock < 0 ? '∞' : r.stock}</p>
+                  <p className="text-[10px]" style={{ color: '#3a4570' }}>{r.token_cost} <TokenIcon size={11} /> · {r.membership_type} · stock: {r.stock < 0 ? '∞' : r.stock}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-[10px] px-2 py-0.5 rounded font-bold" style={{ background: r.active ? 'rgba(0,230,118,0.1)' : 'rgba(255,68,68,0.1)', color: r.active ? '#00E676' : '#FF6B6B' }}>{r.active ? 'Active' : 'Hidden'}</span>
@@ -275,7 +276,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
                 <div key={e.user_id} className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                   <span className="text-sm w-6 text-center font-bold" style={{ color: e.rank <= 3 ? color : '#3a4570' }}>#{e.rank}</span>
                   <span className="flex-1 text-xs truncate" style={{ color: '#7b88c0' }}>{e.email}</span>
-                  <span className="text-sm font-black" style={{ color, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{e.tokens} 🪙</span>
+                  <span className="text-sm font-black" style={{ color, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{e.tokens} <TokenIcon size={12} /></span>
                 </div>
               ))}
             </div>

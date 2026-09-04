@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { useCustomerAuth } from '@/lib/customerAuth';
 import MemberDropdown from './MemberDropdown';
+import TokenIcon from '@/app/components/TokenIcon';
 
 const GOLD = '#FFB400';
 const GREEN = '#00E676';
@@ -57,7 +58,51 @@ export default function MemberDashboardPage() {
 
   return (
     <div className="min-h-screen" style={{ background: '#050816', fontFamily: "'Inter', sans-serif" }}>
-      <div className="pointer-events-none fixed inset-0" style={{ background: `radial-gradient(ellipse 60% 40% at 50% 0%, ${isReseller ? 'rgba(0,230,118,0.06)' : 'rgba(255,180,0,0.06)'} 0%, transparent 60%)` }} />
+      <style>{`
+        @keyframes token-spin {
+          from { transform: rotateY(0deg); }
+          to   { transform: rotateY(360deg); }
+        }
+        @keyframes theme-color-cycle {
+          0%   { --tw-gradient-stops: rgba(138,43,226,0.55), rgba(0,191,255,0.3); filter: hue-rotate(0deg); }
+          33%  { filter: hue-rotate(60deg); }
+          66%  { filter: hue-rotate(180deg); }
+          100% { filter: hue-rotate(360deg); }
+        }
+        @keyframes border-glow-cycle {
+          0%   { border-color: rgba(138,43,226,0.5); box-shadow: 0 0 18px rgba(138,43,226,0.25), 0 0 48px rgba(138,43,226,0.1); }
+          25%  { border-color: rgba(0,191,255,0.5);  box-shadow: 0 0 18px rgba(0,191,255,0.25),  0 0 48px rgba(0,191,255,0.1); }
+          50%  { border-color: rgba(0,229,255,0.5);  box-shadow: 0 0 18px rgba(0,229,255,0.25),  0 0 48px rgba(0,229,255,0.1); }
+          75%  { border-color: rgba(180,0,255,0.5);  box-shadow: 0 0 18px rgba(180,0,255,0.25),  0 0 48px rgba(180,0,255,0.1); }
+          100% { border-color: rgba(138,43,226,0.5); box-shadow: 0 0 18px rgba(138,43,226,0.25), 0 0 48px rgba(138,43,226,0.1); }
+        }
+        @keyframes bg-glow-cycle {
+          0%   { background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(138,43,226,0.14) 0%, transparent 60%); }
+          25%  { background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,191,255,0.14)  0%, transparent 60%); }
+          50%  { background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,229,255,0.14)  0%, transparent 60%); }
+          75%  { background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(180,0,255,0.14)  0%, transparent 60%); }
+          100% { background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(138,43,226,0.14) 0%, transparent 60%); }
+        }
+        @keyframes text-color-cycle {
+          0%   { color: #8A2BE2; }
+          25%  { color: #00BFFF; }
+          50%  { color: #00E5FF; }
+          75%  { color: #B400FF; }
+          100% { color: #8A2BE2; }
+        }
+        @keyframes token-glow-cycle {
+          0%   { filter: drop-shadow(0 0 12px rgba(138,43,226,0.7)) drop-shadow(0 0 28px rgba(138,43,226,0.35)); }
+          25%  { filter: drop-shadow(0 0 12px rgba(0,191,255,0.7))  drop-shadow(0 0 28px rgba(0,191,255,0.35)); }
+          50%  { filter: drop-shadow(0 0 12px rgba(0,229,255,0.7))  drop-shadow(0 0 28px rgba(0,229,255,0.35)); }
+          75%  { filter: drop-shadow(0 0 12px rgba(180,0,255,0.7))  drop-shadow(0 0 28px rgba(180,0,255,0.35)); }
+          100% { filter: drop-shadow(0 0 12px rgba(138,43,226,0.7)) drop-shadow(0 0 28px rgba(138,43,226,0.35)); }
+        }
+        .theme-border-glow { animation: border-glow-cycle 6s linear infinite; }
+        .theme-text-cycle  { animation: text-color-cycle 6s linear infinite; }
+        .theme-token-glow  { animation: token-glow-cycle 6s linear infinite; }
+      `}</style>
+
+      <div className="pointer-events-none fixed inset-0" style={{ animation: 'bg-glow-cycle 6s linear infinite' }} />
 
       {/* Header */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-4 flex items-center justify-between">
@@ -70,29 +115,37 @@ export default function MemberDashboardPage() {
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pb-16">
         {/* Profile card */}
-        <div className="mb-6 p-6 rounded-2xl" style={{ background: `linear-gradient(135deg, ${isReseller ? 'rgba(0,230,118,0.07)' : 'rgba(255,180,0,0.07)'} 0%, rgba(255,255,255,0.02) 100%)`, border: `1px solid ${isReseller ? 'rgba(0,230,118,0.25)' : 'rgba(255,180,0,0.25)'}` }}>
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black" style={{ background: `${accent}18`, border: `1px solid ${accent}40`, color: accent }}>{user.email[0].toUpperCase()}</div>
+        <div className="mb-6 p-6 rounded-2xl theme-border-glow" style={{ background: 'linear-gradient(135deg, rgba(138,43,226,0.07) 0%, rgba(255,255,255,0.02) 100%)' }}>
+          <div className="flex items-center gap-5">
+            {/* Spinning token coin */}
+            <div style={{ perspective: 600, flexShrink: 0 }}>
+              <div style={{
+                width: 64, height: 64, borderRadius: '50%',
+                animation: 'token-spin 4s linear infinite',
+              }} className="theme-token-glow">
+                <TokenIcon size={64} />
+              </div>
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold truncate" style={{ color: '#e8eaf6' }}>{user.email}</p>
-              <p className="text-xs uppercase tracking-widest font-bold mt-0.5" style={{ color: accent }}>{isReseller ? '◆ RESELLER' : '✦ VIP'} MEMBER</p>
+              <p className="text-xs uppercase tracking-widest font-bold mt-0.5 theme-text-cycle">{isReseller ? '◆ RESELLER' : '✦ VIP'} MEMBER</p>
             </div>
             <div className="text-right">
               <p className="text-[10px] uppercase tracking-widest" style={{ color: '#3a4570' }}>Lifetime Earned</p>
-              <p className="text-xl font-black" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{tokenBalance?.lifetimeEarned ?? 0} <span className="text-sm">🪙</span></p>
+              <p className="text-xl font-black" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{tokenBalance?.lifetimeEarned ?? 0} <TokenIcon size={16} /></p>
             </div>
           </div>
         </div>
 
         {/* Token wallet + quick actions */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${accent}22` }}>
+          <div className="p-5 rounded-2xl theme-border-glow" style={{ background: 'rgba(255,255,255,0.03)' }}>
             <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: '#3a4570' }}>Current Balance</p>
-            <p className="text-3xl font-black" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{tokenCount} 🪙</p>
+            <p className="text-3xl font-black theme-text-cycle" style={{ fontFamily: "'Rajdhani','Inter',sans-serif" }}>{tokenCount} <TokenIcon size={22} /></p>
           </div>
           <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: '#3a4570' }}>Lifetime Spent</p>
-            <p className="text-3xl font-black" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{tokenBalance?.lifetimeSpent ?? 0} 🪙</p>
+            <p className="text-3xl font-black" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{tokenBalance?.lifetimeSpent ?? 0} <TokenIcon size={22} /></p>
           </div>
           <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: '#3a4570' }}>Earn Rate</p>
@@ -140,7 +193,7 @@ export default function MemberDashboardPage() {
                     </div>
                   </div>
                   <span className="text-sm font-bold" style={{ color: TX_COLOR[tx.transaction_type] ?? '#c8d0f0' }}>
-                    {tx.amount > 0 ? '+' : ''}{tx.amount} 🪙
+                    {tx.amount > 0 ? '+' : ''}{tx.amount} <TokenIcon size={13} />
                   </span>
                 </div>
               ))

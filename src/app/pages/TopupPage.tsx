@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { useCustomerAuth } from '@/lib/customerAuth';
 import MemberDropdown from './MemberDropdown';
+import TokenIcon from '@/app/components/TokenIcon';
 
 const GOLD = '#FFB400';
 const GREEN = '#00E676';
@@ -91,7 +92,7 @@ export default function TopupPage() {
               className="p-4 rounded-xl text-left"
               style={{ background: selectedPkg === i ? `${accent}12` : 'rgba(255,255,255,0.02)', border: `1px solid ${selectedPkg === i ? accent + '40' : 'rgba(255,255,255,0.07)'}`, cursor: 'pointer', position: 'relative' }}>
               {p.highlight && <span className="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase" style={{ background: `${accent}25`, color: accent }}>Best Value</span>}
-              <p className="text-2xl font-black" style={{ color: selectedPkg === i ? accent : '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{p.tokens} 🪙</p>
+              <p className="text-2xl font-black" style={{ color: selectedPkg === i ? accent : '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{p.tokens} <TokenIcon size={22} /></p>
               <p className="text-[10px] uppercase tracking-widest" style={{ color: '#3a4570' }}>{p.label}</p>
               <p className="text-sm font-bold mt-1" style={{ color: selectedPkg === i ? accent : '#7b88c0' }}>₱{p.price}</p>
             </button>

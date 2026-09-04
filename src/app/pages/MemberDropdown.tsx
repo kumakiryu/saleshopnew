@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useCustomerAuth } from '@/lib/customerAuth';
+import TokenIcon from '@/app/components/TokenIcon';
 
 const GOLD = '#FFB400';
 const GREEN = '#00E676';
@@ -40,14 +41,14 @@ export default function MemberDropdown({ isReseller }: Props) {
         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: isReseller ? 'rgba(0,230,118,0.15)' : 'rgba(255,180,0,0.15)', color: accent }}>
           {isReseller ? '◆ RESELLER' : '✦ VIP'}
         </span>
-        <span style={{ color: accent, fontSize: 10, fontWeight: 700 }}>🪙 {tokenCount}</span>
+        <span style={{ color: accent, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}><TokenIcon size={13} /> {tokenCount}</span>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3a4570' }}><polyline points="6 9 12 15 18 9" /></svg>
       </button>
       {dropOpen && (
         <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 210, background: '#111520', border: `1px solid ${isReseller ? 'rgba(0,230,118,0.2)' : 'rgba(255,180,0,0.2)'}`, borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.6)', zIndex: 100, overflow: 'hidden', animation: 'fadeInDrop 0.15s ease' }}>
           {[
             { label: 'My Dashboard', path: `${basePath}/dashboard`, icon: '👤' },
-            { label: 'Token Wallet', path: `${basePath}/dashboard`, icon: '🪙' },
+            { label: 'Token Wallet', path: `${basePath}/dashboard`, icon: 'token' },
             { label: 'Leaderboard', path: `${basePath}/leaderboard`, icon: '🏆' },
             { label: 'Rewards Store', path: `${basePath}/rewards`, icon: '🎁' },
             { label: 'Top Up Tokens', path: `${basePath}/topup`, icon: '⚡' },
@@ -56,7 +57,7 @@ export default function MemberDropdown({ isReseller }: Props) {
               style={{ width: '100%', textAlign: 'left', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#c8d0f0', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.04)' }}
               onMouseEnter={e => (e.currentTarget.style.background = isReseller ? 'rgba(0,230,118,0.06)' : 'rgba(255,180,0,0.06)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-              <span>{item.icon}</span>{item.label}
+              {item.icon === 'token' ? <TokenIcon size={15} /> : <span>{item.icon}</span>}{item.label}
             </button>
           ))}
           <button onClick={() => { setDropOpen(false); signOut(); navigate('/'); }}

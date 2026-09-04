@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { useCustomerAuth } from '@/lib/customerAuth';
 import MemberDropdown from './MemberDropdown';
+import TokenIcon from '@/app/components/TokenIcon';
 
 const PERKS = [
   { icon: '💎', title: 'VIP Pricing', desc: 'Exclusive discounted prices on all products' },
@@ -61,7 +62,7 @@ export default function VipPage() {
             <div className="flex flex-col gap-3">
               {PERKS.map(p => (
                 <div key={p.title} className="flex items-start gap-4 p-4 rounded-xl" style={{ background: 'rgba(255,180,0,0.04)', border: '1px solid rgba(255,180,0,0.12)' }}>
-                  <span className="text-xl flex-shrink-0">{p.icon}</span>
+                  {p.icon === "🪙" ? <TokenIcon size={28} /> : <span className="text-xl flex-shrink-0">{p.icon}</span>}
                   <div>
                     <p className="text-sm font-bold mb-0.5" style={{ color: '#e8eaf6' }}>{p.title}</p>
                     <p className="text-xs" style={{ color: '#7b88c0' }}>{p.desc}</p>
@@ -87,7 +88,7 @@ export default function VipPage() {
                     </div>
                     <div className="mb-4 p-3 rounded-xl flex items-center justify-between" style={{ background: 'rgba(255,180,0,0.08)', border: '1px solid rgba(255,180,0,0.2)' }}>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">🪙</span>
+                        <TokenIcon size={22} />
                         <div>
                           <p className="text-[10px] uppercase tracking-widest" style={{ color: '#7b88c0' }}>VIP Tokens</p>
                           <p className="text-xl font-black" style={{ color: GOLD, fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>{tokenBalance?.vipTokens ?? 0}</p>

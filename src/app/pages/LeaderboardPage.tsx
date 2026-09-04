@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { useCustomerAuth } from '@/lib/customerAuth';
 import MemberDropdown from './MemberDropdown';
+import TokenIcon from '@/app/components/TokenIcon';
 
 const GOLD = '#FFB400';
 const GREEN = '#00E676';
@@ -66,7 +67,7 @@ export default function LeaderboardPage() {
         {user && myRank > 0 && (
           <div className="mb-4 p-3 rounded-xl flex items-center justify-between" style={{ background: `${accent}08`, border: `1px solid ${accent}25` }}>
             <span className="text-xs font-bold" style={{ color: accent }}>Your Rank: #{myRank}</span>
-            <span className="text-xs font-bold" style={{ color: accent }}>{myTokens} 🪙</span>
+            <span className="text-xs font-bold" style={{ color: accent }}>{myTokens} <TokenIcon size={13} /></span>
           </div>
         )}
 
@@ -93,7 +94,7 @@ export default function LeaderboardPage() {
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-base font-black" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{entry.tokens} 🪙</p>
+                    <p className="text-base font-black" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{entry.tokens} <TokenIcon size={14} /></p>
                   </div>
                 </div>
               );

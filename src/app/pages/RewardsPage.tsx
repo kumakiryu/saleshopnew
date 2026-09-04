@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { useCustomerAuth } from '@/lib/customerAuth';
 import MemberDropdown from './MemberDropdown';
+import TokenIcon from '@/app/components/TokenIcon';
 
 const GOLD = '#FFB400';
 const GREEN = '#00E676';
@@ -99,7 +100,7 @@ export default function RewardsPage() {
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <p className="text-sm font-bold" style={{ color: '#e8eaf6' }}>{r.name}</p>
-                      <span className="flex-shrink-0 text-xs font-black px-2 py-1 rounded-lg" style={{ background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>{r.token_cost} 🪙</span>
+                      <span className="flex-shrink-0 text-xs font-black px-2 py-1 rounded-lg" style={{ background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>{r.token_cost} <TokenIcon size={13} /></span>
                     </div>
                     {r.description && <p className="text-xs mb-3" style={{ color: '#7b88c0' }}>{r.description}</p>}
                     <div className="flex items-center justify-between">
