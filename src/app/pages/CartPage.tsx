@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { useStore } from '@/lib/store';
@@ -17,6 +18,19 @@ export default function CartPage() {
   const navigate = useNavigate();
   const { cartItems, removeFromCart, updateCartQty, clearCart, cartCount } = useStore();
   const { user: cusUser } = useCustomerAuth();
+
+  useEffect(() => {
+    if (cartItems.length === 0) return;
+    let idle: ReturnType<typeof setTimeout>;
+    const reset = () => {
+      clearTimeout(idle);
+      idle = setTimeout(() => clearCart(), 15 * 60 * 1000);
+    };
+    reset();
+    const EVENTS = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'] as const;
+    EVENTS.forEach(ev => window.addEventListener(ev, reset, { passive: true }));
+    return () => { clearTimeout(idle); EVENTS.forEach(ev => window.removeEventListener(ev, reset)); };
+  }, [cartItems.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
   const cusTier = cusUser?.tier ?? 'normal';
   const tierTotal = cartItems.reduce((sum, ci) =>
     sum + tierPrice(ci.product.price, ci.product.vip_price ?? null, ci.product.reseller_price ?? null, cusTier) * ci.quantity, 0

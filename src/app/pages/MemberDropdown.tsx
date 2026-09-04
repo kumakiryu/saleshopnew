@@ -31,7 +31,7 @@ export default function MemberDropdown({ isReseller }: Props) {
   if (!user) return null;
 
   return (
-    <div className="relative" ref={dropRef}>
+    <div className="relative" ref={dropRef} style={{ zIndex: 9999 }}>
       <button
         onClick={() => setDropOpen(d => !d)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs"
@@ -45,7 +45,7 @@ export default function MemberDropdown({ isReseller }: Props) {
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3a4570' }}><polyline points="6 9 12 15 18 9" /></svg>
       </button>
       {dropOpen && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 210, background: '#111520', border: `1px solid ${isReseller ? 'rgba(0,230,118,0.2)' : 'rgba(255,180,0,0.2)'}`, borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.6)', zIndex: 100, overflow: 'hidden', animation: 'fadeInDrop 0.15s ease' }}>
+        <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 210, background: '#000000', border: `2px solid ${isReseller ? '#00E676' : '#FFB400'}`, borderRadius: 12, boxShadow: '0 16px 56px rgba(0,0,0,0.98)', zIndex: 9999, overflow: 'hidden', animation: 'fadeInDrop 0.15s ease' }}>
           {[
             { label: 'My Dashboard', path: `${basePath}/dashboard`, icon: '👤' },
             { label: 'Token Wallet', path: `${basePath}/dashboard`, icon: 'token' },

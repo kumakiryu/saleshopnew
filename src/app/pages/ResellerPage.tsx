@@ -24,6 +24,7 @@ export default function ResellerPage() {
 
   const isReseller = user?.tier === 'reseller';
   const isVip      = user?.tier === 'vip';
+  const isMember   = isVip || isReseller;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

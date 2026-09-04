@@ -290,7 +290,6 @@ export default function ShopPage() {
   const [page, setPage] = useState<'home' | 'stock'>(pathname === '/stock' ? 'stock' : 'home');
   const [dir, setDir] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [showPayments, setShowPayments] = useState(false);
 
   useEffect(() => {
     supabase.from('products').select('*').order('category')
@@ -390,15 +389,6 @@ export default function ShopPage() {
                       <span style={{ fontFamily: "'Rajdhani', 'Inter', sans-serif", fontWeight: 600, letterSpacing: '0.06em' }}>Announcements</span>
                     </button>
                     <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.08)' }} />
-                    <button onClick={() => setShowPayments(p => !p)}
-                      className="btn-ghost inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm select-none focus-visible:outline-none"
-                      style={{ color: showPayments ? '#c8d0f0' : '#7b88c0', background: showPayments ? 'rgba(0,191,255,0.05)' : 'transparent', borderColor: showPayments ? 'rgba(0,191,255,0.2)' : undefined }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
-                      </svg>
-                      <span style={{ fontFamily: "'Rajdhani', 'Inter', sans-serif", fontWeight: 600, letterSpacing: '0.06em' }}>Payments</span>
-                    </button>
-                    <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.08)' }} />
                     {/* Login button */}
                     <button onClick={() => navigate('/vip')}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm select-none focus-visible:outline-none"
@@ -419,35 +409,6 @@ export default function ShopPage() {
                     Join our Discord Server
                   </a>
 
-                  {/* Payment methods popover */}
-                  {showPayments && (
-                    <div
-                      className="flex flex-col items-center gap-3 px-5 py-4 rounded-2xl"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        backdropFilter: 'blur(12px)',
-                      }}
-                    >
-                      <div className="flex items-center gap-2 flex-wrap justify-center">
-                        {[
-                          { label: 'GCash',     color: '#007AFF', bg: 'rgba(0,122,255,0.1)',     border: 'rgba(0,122,255,0.25)' },
-                          { label: 'Bitcoin',   color: '#F7931A', bg: 'rgba(247,147,26,0.1)',    border: 'rgba(247,147,26,0.25)' },
-                          { label: 'Litecoin',  color: '#B8B8B8', bg: 'rgba(184,184,184,0.1)',   border: 'rgba(184,184,184,0.2)' },
-                          { label: 'Ethereum',  color: '#627EEA', bg: 'rgba(98,126,234,0.1)',    border: 'rgba(98,126,234,0.25)' },
-                        ].map(m => (
-                          <span key={m.label}
-                            className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase"
-                            style={{ background: m.bg, color: m.color, border: `1px solid ${m.border}`, fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>
-                            {m.label}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-[10px] text-center" style={{ color: '#2e3a5a', letterSpacing: '0.04em' }}>
-                        Inquire in the server for more payment methods
-                      </p>
-                    </div>
-                  )}
                 </div>
               </motion.div>
 

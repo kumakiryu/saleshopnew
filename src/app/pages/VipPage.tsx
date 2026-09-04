@@ -24,6 +24,7 @@ export default function VipPage() {
 
   const isVip      = user?.tier === 'vip';
   const isReseller = user?.tier === 'reseller';
+  const isMember   = isVip || isReseller;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
