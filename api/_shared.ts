@@ -215,6 +215,17 @@ async function sendEmail(order: Order, items: OrderItem[], deliveries: AssignedD
 
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4ZmNjcGFkc2J1bnluaWduYnduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5MDk1ODYsImV4cCI6MjA5ODQ4NTU4Nn0.YVABbHcntCEAWSkXtRtKsfWhQ_A8nDYweitrMLTSjyE';
 
+export async function verifyCustomerToken(token: string): Promise<{ ok: boolean; userId?: string; email?: string }> {
+  if (!token) return { ok: false };
+  const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
+  });
+  if (!userRes.ok) return { ok: false };
+  const user = await userRes.json();
+  if (!user?.id) return { ok: false };
+  return { ok: true, userId: user.id, email: user.email };
+}
+
 export async function verifyAdminToken(token: string): Promise<{ ok: boolean; userId?: string; reason?: string }> {
   const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
@@ -232,6 +243,70 @@ export async function verifyAdminToken(token: string): Promise<{ ok: boolean; us
   return { ok: true, userId: user.id };
 }
 
+// ── Token helpers ─────────────────────────────────────────────────────────────
+
+async function upsertTokenBalance(userId: string, tokenType: 'vip' | 'reseller', delta: number): Promise<void> {
+  const col = tokenType === 'vip' ? 'vip_tokens' : 'reseller_tokens';
+  const existing = await dbGet<{ user_id: string; vip_tokens: number; reseller_tokens: number }>('user_tokens', { user_id: userId });
+  if (existing) {
+    const newVal = Math.max(0, (existing[col as keyof typeof existing] as number) + delta);
+    await dbUpdate('user_tokens', { user_id: userId }, { [col]: newVal, updated_at: new Date().toISOString() });
+  } else {
+    await fetch(`${SUPABASE_URL}/rest/v1/user_tokens`, {
+      method: 'POST',
+      headers: serviceHeaders(),
+      body: JSON.stringify({ user_id: userId, vip_tokens: tokenType === 'vip' ? Math.max(0, delta) : 0, reseller_tokens: tokenType === 'reseller' ? Math.max(0, delta) : 0 }),
+    });
+  }
+}
+
+async function logTokenTransaction(userId: string, txType: string, amount: number, reason: string): Promise<void> {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/token_transactions`, {
+      method: 'POST',
+      headers: { ...serviceHeaders(), Prefer: 'return=minimal' },
+      body: JSON.stringify({ user_id: userId, transaction_type: txType, amount, reason, created_at: new Date().toISOString() }),
+    });
+  } catch { /* non-critical */ }
+}
+
+async function awardTokensForOrder(order: Order): Promise<void> {
+  try {
+    const usersRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(order.customer_email)}`, {
+      headers: { 'apikey': getServiceKey(), 'Authorization': `Bearer ${getServiceKey()}` },
+    });
+    if (!usersRes.ok) return;
+    const usersData = await usersRes.json();
+    const userId = usersData?.users?.[0]?.id ?? usersData?.[0]?.id;
+    if (!userId) return;
+
+    const membership = await dbGet<{ tier: string }>('user_memberships', { user_id: userId });
+    const tier = membership?.tier ?? 'normal';
+    if (tier === 'normal') return;
+
+    const tokenType = tier === 'reseller' ? 'reseller' : 'vip';
+    const rate = tier === 'reseller' ? 2 : 1;
+    const earned = Math.floor(Number(order.total) / 100) * rate;
+    if (earned <= 0) return;
+
+    await upsertTokenBalance(userId, tokenType, earned);
+    await logTokenTransaction(userId, 'earn', earned, `Purchase order ${order.id}`);
+    console.log('[TOKENS] Awarded', earned, tokenType, 'tokens to', userId);
+  } catch (e) {
+    console.warn('[TOKENS] awardTokensForOrder error:', e);
+  }
+}
+
+async function awardTokenTopup(userId: string, tokenType: 'vip' | 'reseller', amount: number, orderId: string): Promise<void> {
+  try {
+    await upsertTokenBalance(userId, tokenType, amount);
+    await logTokenTransaction(userId, 'topup', amount, `Token top-up order ${orderId}`);
+    console.log('[TOKENS] Topped up', amount, tokenType, 'tokens for', userId);
+  } catch (e) {
+    console.warn('[TOKENS] awardTokenTopup error:', e);
+  }
+}
+
 // ── Main fulfillment ──────────────────────────────────────────────────────────
 
 export async function fulfillOrder(orderId: string): Promise<void> {
@@ -247,6 +322,19 @@ export async function fulfillOrder(orderId: string): Promise<void> {
   if (order.status === 'delivered') {
     console.log('[FULFILLMENT] Already delivered — skipping (idempotent)');
     return;
+  }
+
+  // Detect token top-up orders
+  if (order.notes) {
+    try {
+      const parsed = JSON.parse(order.notes);
+      if (parsed?.tokenTopup === true && parsed?.userId && parsed?.tokenAmount && parsed?.tokenType) {
+        await dbUpdate('orders', { id: orderId }, { status: 'delivered', updated_at: new Date().toISOString() });
+        await awardTokenTopup(parsed.userId, parsed.tokenType as 'vip' | 'reseller', Number(parsed.tokenAmount), orderId);
+        console.log('[FULFILLMENT] Token top-up fulfilled');
+        return;
+      }
+    } catch { /* not JSON or not a topup */ }
   }
 
   await dbUpdate('orders', { id: orderId }, { status: 'paid', updated_at: new Date().toISOString() });
@@ -336,4 +424,7 @@ export async function fulfillOrder(orderId: string): Promise<void> {
   await dbUpdate('orders', { id: orderId }, { status: 'delivered', updated_at: new Date().toISOString() });
   console.log('[FULFILLMENT] Order marked completed');
   console.log('[FULFILLMENT] SUCCESS — order', orderId, '| deliveries:', deliveries.length);
+
+  // Award purchase tokens non-blocking
+  awardTokensForOrder(order).catch(e => console.warn('[TOKENS] Award error:', e));
 }

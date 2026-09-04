@@ -12,6 +12,7 @@ import VaultGuard from './admin/VaultGuard';
 import AdminSettingsPanel from './admin/AdminSettingsPanel';
 import MembersPanel from './admin/MembersPanel';
 import EmailCenterPanel from './admin/EmailCenterPanel';
+import TokenEconomyPanel from './admin/TokenEconomyPanel';
 import { isVaultUnlocked } from '@/lib/vault';
 
 /* ─────────────────────────────────────────────────────── types */
@@ -79,6 +80,7 @@ const IcMail   = () => <SvgIc><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H
 const IcCode   = () => <SvgIc><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></SvgIc>;
 const IcDb     = () => <SvgIc><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></SvgIc>;
 const IcGear   = () => <SvgIc><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></SvgIc>;
+const IcCoin   = () => <SvgIc><circle cx="12" cy="12" r="9"/><path d="M12 6v2m0 8v2M8.5 9.5C8.5 8.12 10.07 7 12 7s3.5 1.12 3.5 2.5c0 1.5-1.57 2.5-3.5 2.5s-3.5 1-3.5 2.5C8.5 15.88 10.07 17 12 17s3.5-1.12 3.5-2.5"/></SvgIc>;
 
 function NavSection({ label, children }: { label: string; children: React.ReactNode }) {
   return <div><div className="nav-section-label">{label}</div>{children}</div>;
@@ -95,9 +97,9 @@ function NavItem({ icon, label, active, onClick, badge }: { icon: React.ReactNod
   );
 }
 
-type Tab = 'dashboard' | 'products' | 'orders' | 'announcements' | 'codes' | 'accounts' | 'settings' | 'members' | 'emails';
-const TAB_TITLES: Record<Tab, string> = { dashboard: 'Dashboard', orders: 'Orders', products: 'All Products', announcements: 'Announcements', codes: 'Code Inventory', accounts: 'Account Inventory', members: 'Members', emails: 'Email Center', settings: 'Settings' };
-const TAB_SUBTITLES: Record<Tab, string> = { dashboard: 'Overview of your store performance.', orders: 'Track and manage customer orders.', products: 'Manage your product catalog and stock.', announcements: 'Post and manage store announcements.', codes: 'Manage digital code inventory (vault-protected).', accounts: 'Manage account credentials inventory (vault-protected).', members: 'Manage VIP and Reseller memberships.', emails: 'Monitor email delivery logs.', settings: 'Configure store and admin settings.' };
+type Tab = 'dashboard' | 'products' | 'orders' | 'announcements' | 'codes' | 'accounts' | 'settings' | 'members' | 'emails' | 'tokens';
+const TAB_TITLES: Record<Tab, string> = { dashboard: 'Dashboard', orders: 'Orders', products: 'All Products', announcements: 'Announcements', codes: 'Code Inventory', accounts: 'Account Inventory', members: 'Members', emails: 'Email Center', settings: 'Settings', tokens: 'Token Economy' };
+const TAB_SUBTITLES: Record<Tab, string> = { dashboard: 'Overview of your store performance.', orders: 'Track and manage customer orders.', products: 'Manage your product catalog and stock.', announcements: 'Post and manage store announcements.', codes: 'Manage digital code inventory (vault-protected).', accounts: 'Manage account credentials inventory (vault-protected).', members: 'Manage VIP and Reseller memberships.', emails: 'Monitor email delivery logs.', settings: 'Configure store and admin settings.', tokens: 'Manage VIP & Reseller tokens, rewards, and leaderboards.' };
 
 /* ─────────────────────────────────────────────────────── helpers */
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
@@ -700,8 +702,8 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
 
   const TAB_ACCESS: Record<string, Tab[]> = {
-    owner:         ['dashboard','products','orders','announcements','codes','accounts','members','emails','settings'],
-    administrator: ['dashboard','products','orders','announcements','codes','accounts','members','emails','settings'],
+    owner:         ['dashboard','products','orders','announcements','codes','accounts','members','emails','tokens','settings'],
+    administrator: ['dashboard','products','orders','announcements','codes','accounts','members','emails','tokens','settings'],
     moderator:     ['dashboard','products','orders','announcements'],
   };
   const allowedTabs = TAB_ACCESS[adminRole] ?? TAB_ACCESS.administrator;
@@ -929,11 +931,12 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
         <NavSection label="Home">
           <NavItem icon={<IcGrid />} label="Dashboard" active={tab === 'dashboard'} onClick={() => switchTab('dashboard')} />
         </NavSection>
-        {allowedTabs.some(t => ['announcements','members','emails'].includes(t)) && (
+        {allowedTabs.some(t => ['announcements','members','emails','tokens'].includes(t)) && (
           <NavSection label="Manage">
             {allowedTabs.includes('announcements') && <NavItem icon={<IcBell />} label="Announcements" active={tab === 'announcements'} onClick={() => switchTab('announcements')} />}
             {allowedTabs.includes('members') && <NavItem icon={<IcUsers />} label="Members" active={tab === 'members'} onClick={() => switchTab('members')} />}
             {allowedTabs.includes('emails') && <NavItem icon={<IcMail />} label="Email Center" active={tab === 'emails'} onClick={() => switchTab('emails')} />}
+            {allowedTabs.includes('tokens') && <NavItem icon={<IcCoin />} label="Token Economy" active={tab === 'tokens'} onClick={() => switchTab('tokens')} />}
           </NavSection>
         )}
         {allowedTabs.some(t => ['codes','accounts','settings'].includes(t)) && (
@@ -1420,6 +1423,12 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
               </div>
             </div>
             <EmailCenterPanel />
+          </motion.div>
+        )}
+
+        {tab === 'tokens' && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
+            <TokenEconomyPanel adminToken="" />
           </motion.div>
         )}
 

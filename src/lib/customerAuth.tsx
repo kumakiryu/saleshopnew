@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import type { CustomerTier, CustomerUser } from './types';
+import type { CustomerTier, CustomerUser, TokenBalance } from './types';
 
 const BASE = `https://${projectId}.supabase.co`;
 const KEY  = publicAnonKey;
@@ -9,15 +9,18 @@ const CS_KEY = 'cs_session';
 interface CustomerAuthCtx {
   user: CustomerUser | null;
   loading: boolean;
+  tokenBalance: TokenBalance | null;
   signIn:  (email: string, password: string) => Promise<string | null>;
   signUp:  (email: string, password: string) => Promise<string | null>;
   signOut: () => void;
   refreshTier: () => Promise<void>;
+  refreshTokens: () => Promise<void>;
 }
 
 const Ctx = createContext<CustomerAuthCtx>({
-  user: null, loading: true,
-  signIn: async () => null, signUp: async () => null, signOut: () => {}, refreshTier: async () => {},
+  user: null, loading: true, tokenBalance: null,
+  signIn: async () => null, signUp: async () => null, signOut: () => {},
+  refreshTier: async () => {}, refreshTokens: async () => {},
 });
 
 function getStoredSession(): { access_token: string; user: { id: string; email: string } } | null {
@@ -36,16 +39,37 @@ async function fetchTier(userId: string, token: string): Promise<CustomerTier> {
   } catch { return 'normal'; }
 }
 
+async function fetchTokenBalance(accessToken: string): Promise<TokenBalance | null> {
+  try {
+    const res = await fetch('/api/get-tokens', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) return null;
+    const d = await res.json();
+    return {
+      vipTokens: d.vip_tokens ?? 0,
+      resellerTokens: d.reseller_tokens ?? 0,
+      lifetimeEarned: d.lifetime_earned ?? 0,
+      lifetimeSpent: d.lifetime_spent ?? 0,
+    };
+  } catch { return null; }
+}
+
 export function CustomerAuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser]       = useState<CustomerUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]               = useState<CustomerUser | null>(null);
+  const [loading, setLoading]         = useState(true);
+  const [tokenBalance, setTokenBalance] = useState<TokenBalance | null>(null);
 
   useEffect(() => {
     const session = getStoredSession();
     if (!session) { setLoading(false); return; }
-    fetchTier(session.user.id, session.access_token).then(tier => {
+    fetchTier(session.user.id, session.access_token).then(async tier => {
       setUser({ id: session.user.id, email: session.user.email, tier });
       setLoading(false);
+      if (tier !== 'normal') {
+        const bal = await fetchTokenBalance(session.access_token);
+        setTokenBalance(bal);
+      }
     });
   }, []);
 
@@ -61,6 +85,10 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(CS_KEY, JSON.stringify(session));
     const tier = await fetchTier(session.user.id, session.access_token);
     setUser({ id: session.user.id, email: session.user.email, tier });
+    if (tier !== 'normal') {
+      const bal = await fetchTokenBalance(session.access_token);
+      setTokenBalance(bal);
+    }
     return null;
   }
 
@@ -89,12 +117,24 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
     setUser(u => u ? { ...u, tier } : null);
   }
 
+  async function refreshTokens() {
+    const session = getStoredSession();
+    if (!session) return;
+    const bal = await fetchTokenBalance(session.access_token);
+    setTokenBalance(bal);
+  }
+
   function signOut() {
     localStorage.removeItem(CS_KEY);
     setUser(null);
+    setTokenBalance(null);
   }
 
-  return <Ctx.Provider value={{ user, loading, signIn, signUp, signOut, refreshTier }}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={{ user, loading, tokenBalance, signIn, signUp, signOut, refreshTier, refreshTokens }}>
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useCustomerAuth() { return useContext(Ctx); }

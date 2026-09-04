@@ -115,3 +115,39 @@ export interface OrderItem {
   assigned_username: string | null;
   assigned_password: string | null;
 }
+
+export interface TokenBalance {
+  vipTokens: number;
+  resellerTokens: number;
+  lifetimeEarned: number;
+  lifetimeSpent: number;
+}
+
+export interface TokenTransaction {
+  id: string;
+  user_id: string;
+  transaction_type: 'earn' | 'spend' | 'adjust' | 'topup';
+  amount: number;
+  reason: string;
+  created_at: string;
+}
+
+export interface RewardProduct {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  token_cost: number;
+  membership_type: 'vip' | 'reseller' | 'both';
+  stock: number;
+  active: boolean;
+  created_at: string;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  user_id: string;
+  email: string;
+  tokens: number;
+  token_type: 'vip' | 'reseller';
+}

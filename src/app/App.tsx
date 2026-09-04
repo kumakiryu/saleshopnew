@@ -9,6 +9,10 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrderStatusPage from './pages/OrderStatusPage';
 import VipPage from './pages/VipPage';
 import ResellerPage from './pages/ResellerPage';
+import MemberDashboardPage from './pages/MemberDashboardPage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import RewardsPage from './pages/RewardsPage';
+import TopupPage from './pages/TopupPage';
 
 export default function App() {
   return (
@@ -24,7 +28,15 @@ export default function App() {
             <Route path="/order-status/:id" element={<OrderStatusPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/vip" element={<VipPage />} />
+            <Route path="/vip/dashboard" element={<MemberDashboardPage />} />
+            <Route path="/vip/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/vip/rewards" element={<RewardsPage />} />
+            <Route path="/vip/topup" element={<TopupPage />} />
             <Route path="/reseller" element={<ResellerPage />} />
+            <Route path="/reseller/dashboard" element={<MemberDashboardPage />} />
+            <Route path="/reseller/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/reseller/rewards" element={<RewardsPage />} />
+            <Route path="/reseller/topup" element={<TopupPage />} />
             <Route path="*" element={<ShopPage />} />
           </Routes>
         </MaintenanceGate>

@@ -9,6 +9,7 @@ import { useStore } from '@/lib/store';
 import { useAnnouncements } from '@/lib/useAnnouncements';
 import { CATEGORY_STYLE, renderContent } from './AnnouncementsPage';
 import { useCustomerAuth, tierPrice, tierLabel, tierColor, type CustomerTier } from '@/lib/customerAuth';
+import MemberDropdown from './MemberDropdown';
 import type { Product } from '@/lib/types';
 
 /* ── Cart Bubble ─────────────────────────────────────────────── */
@@ -233,30 +234,26 @@ function Background() {
 }
 
 function AccountBadge() {
-  const navigate = useNavigate();
   const { user, signOut } = useCustomerAuth();
   if (!user) return null;
-  const tier = user.tier as CustomerTier;
-  const color = tierColor(tier) || '#00BFFF';
-  const label = tierLabel(tier);
-  return (
-    <div className="fixed top-4 right-4 z-40 flex items-center gap-2">
-      {label && (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-widest"
-          style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>
-          {label}
-        </span>
-      )}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
-        <span className="text-[11px] max-w-[120px] truncate" style={{ color: '#7b88c0' }}>{user.email}</span>
-        <button onClick={signOut}
-          className="text-[10px] px-1.5 py-0.5 rounded-md"
-          style={{ color: '#FF6B6B', background: 'transparent', border: 'none', cursor: 'pointer', opacity: 0.7 }}
-          title="Sign out">
-          ✕
-        </button>
+  const isMember = user.tier === 'vip' || user.tier === 'reseller';
+  if (isMember) {
+    return (
+      <div className="fixed top-4 right-4 z-40">
+        <MemberDropdown isReseller={user.tier === 'reseller'} />
       </div>
+    );
+  }
+  return (
+    <div className="fixed top-4 right-4 z-40 flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
+      <span className="text-[11px] max-w-[120px] truncate" style={{ color: '#7b88c0' }}>{user.email}</span>
+      <button onClick={signOut}
+        className="text-[10px] px-1.5 py-0.5 rounded-md"
+        style={{ color: '#FF6B6B', background: 'transparent', border: 'none', cursor: 'pointer', opacity: 0.7 }}
+        title="Sign out">
+        ✕
+      </button>
     </div>
   );
 }
