@@ -68,7 +68,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
       const res = await fetch('/api/admin?action=tokens', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
-        body: JSON.stringify({ action: tokenOp.action, target_user_id: tokenOp.userId, token_type: tokenOp.type, amount: Number(tokenOp.amount) }),
+        body: JSON.stringify({ action: tokenOp.action, email: tokenOp.userId, token_type: tokenOp.type, amount: Number(tokenOp.amount) }),
       });
       const d = await res.json();
       if (res.ok) { setTokenOpMsg(`Done! New balance: ${d.new_balance}`); await loadLeaders(); }
@@ -177,7 +177,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
                 <select value={tokenOp.userId} onChange={e => setTokenOp(o => ({ ...o, userId: e.target.value }))}
                   style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
                   <option value="">— Select member —</option>
-                  {members.map((m: any) => <option key={m.id} value={m.id}>{m.email} ({m.tier})</option>)}
+                  {members.map((m: any) => <option key={m.email} value={m.email}>{m.email} ({m.tier})</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
