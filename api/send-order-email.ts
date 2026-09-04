@@ -143,7 +143,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }),
     });
 
-    const data = await response.json();
+    const data = await response.json() as any;
 
     if (!response.ok) {
       return res.status(response.status).json({ error: data?.message ?? 'Resend API error', detail: data });

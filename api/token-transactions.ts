@@ -13,7 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
   });
   if (!userRes.ok) return res.status(401).json({ error: 'Unauthorized' });
-  const user = await userRes.json();
+  const user = await userRes.json() as any;
   if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
   const limit = Math.min(parseInt(String(req.query.limit ?? '20')), 100);

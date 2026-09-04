@@ -9,7 +9,7 @@ async function verifyAdmin(token: string): Promise<boolean> {
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
   });
   if (!userRes.ok) return false;
-  const user = await userRes.json();
+  const user = await userRes.json() as any;
   if (!user?.id) return false;
   const adminRes = await fetch(`${SUPABASE_URL}/rest/v1/admins?id=eq.${user.id}&select=id&limit=1`, {
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },

@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   if (!listRes.ok) return res.status(500).json({ error: 'Failed to look up user' });
-  const listData = await listRes.json();
+  const listData = await listRes.json() as any;
   const users: any[] = listData?.users ?? (Array.isArray(listData) ? listData : []);
   const targetUser = users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
   if (!targetUser) return res.status(404).json({ error: `No account found for ${email}` });
@@ -41,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify({ user_id: userId, tier, assigned_by: adminId, assigned_at: new Date().toISOString() }),
     });
     if (!upsertRes.ok) {
-      const err = await upsertRes.json().catch(() => ({}));
+      const err = await upsertRes.json().catch(() => ({})) as any;
       return res.status(500).json({ error: err?.message ?? 'Failed to set membership' });
     }
   }
