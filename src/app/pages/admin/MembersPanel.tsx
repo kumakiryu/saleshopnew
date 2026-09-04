@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { CustomerTier } from '@/lib/types';
-import { projectId, publicAnonKey } from '../../../../utils/supabase/info';
 
 interface Member {
   user_id: string;
   tier: CustomerTier;
   assigned_at: string;
-  email?: string;
+  email?: string | null;
 }
 
 const TIER_COLOR: Record<CustomerTier, string> = {
@@ -25,35 +24,45 @@ const INPUT_STYLE: React.CSSProperties = {
   color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '9px 12px', fontSize: 13, width: '100%',
 };
 
+function getAdminToken(): string {
+  try { return JSON.parse(localStorage.getItem('sb_session') ?? 'null')?.access_token ?? ''; }
+  catch { return ''; }
+}
+
 export default function MembersPanel({ adminId }: { adminId: string }) {
-  const [mode, setMode] = useState<'create'|'assign'|'list'>('list');
-  const [members, setMembers]   = useState<Member[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [search, setSearch]     = useState('');
-  const [filter, setFilter]     = useState<CustomerTier | 'all'>('all');
-  const [saving, setSaving]     = useState<string | null>(null);
+  const [mode, setMode] = useState<'create' | 'assign' | 'list'>('list');
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch]   = useState('');
+  const [filter, setFilter]   = useState<CustomerTier | 'all'>('all');
+  const [saving, setSaving]   = useState<string | null>(null);
 
   // Assign tier form
-  const [addEmail, setAddEmail] = useState('');
-  const [addTier, setAddTier]   = useState<CustomerTier>('vip');
+  const [addEmail, setAddEmail]     = useState('');
+  const [addTier, setAddTier]       = useState<CustomerTier>('vip');
   const [addLoading, setAddLoading] = useState(false);
-  const [addError, setAddError] = useState('');
-  const [addMsg, setAddMsg]     = useState('');
+  const [addError, setAddError]     = useState('');
+  const [addMsg, setAddMsg]         = useState('');
 
   // Create account form
-  const [newEmail, setNewEmail]     = useState('');
-  const [newPass, setNewPass]       = useState('');
-  const [newTier, setNewTier]       = useState<CustomerTier>('vip');
-  const [createLoading, setCreateLoading] = useState(false);
-  const [createError, setCreateError]     = useState('');
-  const [createMsg, setCreateMsg]         = useState('');
+  const [newEmail, setNewEmail]               = useState('');
+  const [newPass, setNewPass]                 = useState('');
+  const [newTier, setNewTier]                 = useState<CustomerTier>('vip');
+  const [createLoading, setCreateLoading]     = useState(false);
+  const [createError, setCreateError]         = useState('');
+  const [createMsg, setCreateMsg]             = useState('');
 
   useEffect(() => { load(); }, []);
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase.from('user_memberships').select('*').order('assigned_at', { ascending: false });
-    if (data) setMembers(data as Member[]);
+    try {
+      const res = await fetch('/api/list-members', {
+        headers: { 'x-admin-token': getAdminToken() },
+      });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data)) setMembers(data as Member[]);
+    } catch { /* silent */ }
     setLoading(false);
   }
 
@@ -78,11 +87,7 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
       const res = await fetch('/api/manage-membership', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: addEmail.trim().toLowerCase(),
-          tier: addTier,
-          adminToken: (JSON.parse(localStorage.getItem('sb_session') ?? 'null'))?.access_token,
-        }),
+        body: JSON.stringify({ email: addEmail.trim().toLowerCase(), tier: addTier, adminToken: getAdminToken() }),
       });
       const json = await res.json();
       if (!res.ok) setAddError(json.error ?? 'Failed');
@@ -96,40 +101,34 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
     if (newPass.length < 8) { setCreateError('Password must be at least 8 characters.'); return; }
     setCreateLoading(true); setCreateError(''); setCreateMsg('');
     try {
-      // Create the Supabase auth account using the public API
-      const BASE = `https://${projectId}.supabase.co`;
-      const KEY  = publicAnonKey;
-      const signupRes = await fetch(`${BASE}/auth/v1/signup`, {
+      const res = await fetch('/api/create-member', {
         method: 'POST',
-        headers: { apikey: KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: newEmail.trim().toLowerCase(), password: newPass }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newEmail.trim().toLowerCase(),
+          password: newPass,
+          tier: newTier,
+          adminToken: getAdminToken(),
+        }),
       });
-      const signupJson = await signupRes.json();
-      if (!signupRes.ok) {
-        setCreateError(signupJson?.msg ?? signupJson?.error_description ?? 'Account creation failed');
-        setCreateLoading(false); return;
+      const json = await res.json();
+      if (!res.ok) {
+        setCreateError(json.error ?? 'Account creation failed');
+      } else {
+        setCreateMsg(`✓ Account created for ${newEmail} with ${newTier.toUpperCase()} tier. Share the password with the customer.`);
+        setNewEmail(''); setNewPass(''); setNewTier('vip');
+        load();
       }
-      const userId = signupJson?.user?.id ?? signupJson?.id;
-      if (!userId) { setCreateError('Account created but user ID not returned. Assign tier manually.'); setCreateLoading(false); return; }
-
-      // Assign tier if not normal
-      if (newTier !== 'normal') {
-        await supabase.from('user_memberships').upsert(
-          { user_id: userId, tier: newTier, assigned_by: adminId, assigned_at: new Date().toISOString(), email: newEmail.trim().toLowerCase() },
-          { onConflict: 'user_id' }
-        );
-      }
-
-      setCreateMsg(`✓ Account created for ${newEmail} with ${newTier.toUpperCase()} tier. Share the password with the customer.`);
-      setNewEmail(''); setNewPass(''); setNewTier('vip');
-      load();
     } catch (e: any) { setCreateError(e.message); }
     setCreateLoading(false);
   }
 
   const filtered = members.filter(m => {
     if (filter !== 'all' && m.tier !== filter) return false;
-    if (search && !m.user_id.toLowerCase().includes(search.toLowerCase()) && !(m.email ?? '').toLowerCase().includes(search.toLowerCase())) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!m.user_id.toLowerCase().includes(q) && !(m.email ?? '').toLowerCase().includes(q)) return false;
+    }
     return true;
   });
 
@@ -156,7 +155,7 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
         </button>
       </div>
 
-      {/* ── Create new account ── */}
+      {/* Create new account */}
       {mode === 'create' && (
         <div className="p-5 rounded-2xl flex flex-col gap-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(0,191,255,0.15)' }}>
           <div>
@@ -201,7 +200,7 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
         </div>
       )}
 
-      {/* ── Assign tier by email ── */}
+      {/* Assign tier by email */}
       {mode === 'assign' && (
         <div className="p-5 rounded-2xl flex flex-col gap-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div>
@@ -232,7 +231,7 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
         </div>
       )}
 
-      {/* ── Members list ── */}
+      {/* Members list */}
       {mode === 'list' && (
         <>
           <div className="flex flex-wrap gap-3 items-center">
