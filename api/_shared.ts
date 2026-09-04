@@ -219,14 +219,25 @@ export async function verifyAdminToken(token: string): Promise<{ ok: boolean; us
 // ── Main fulfillment ──────────────────────────────────────────────────────────
 
 export async function fulfillOrder(orderId: string): Promise<void> {
-  const order = await dbGet<Order>('orders', { id: orderId });
-  if (!order) throw new Error(`Order not found: ${orderId}`);
+  console.log('[FULFILLMENT] Starting fulfillment for order', orderId);
 
-  if (order.status === 'delivered') return;
+  const order = await dbGet<Order>('orders', { id: orderId });
+  if (!order) {
+    console.error('[FULFILLMENT] FAILED — Order not found:', orderId);
+    throw new Error(`Order not found: ${orderId}`);
+  }
+  console.log('[FULFILLMENT] Order found | status:', order.status);
+
+  if (order.status === 'delivered') {
+    console.log('[FULFILLMENT] Already delivered — skipping (idempotent)');
+    return;
+  }
 
   await dbUpdate('orders', { id: orderId }, { status: 'paid', updated_at: new Date().toISOString() });
+  console.log('[FULFILLMENT] Order marked paid');
 
   const orderItems = await dbGetMany<OrderItem>('order_items', { order_id: orderId });
+  console.log('[FULFILLMENT] Items to fulfill:', orderItems.length);
   const deliveries: AssignedDelivery[] = [];
 
   for (const item of orderItems) {
@@ -235,9 +246,13 @@ export async function fulfillOrder(orderId: string): Promise<void> {
     const product = await dbGetSelect<{ product_type: string; stock: number; download_url: string | null }>(
       'products', { id: item.product_id }, 'product_type,stock,download_url'
     );
-    if (!product) continue;
+    if (!product) {
+      console.warn('[FULFILLMENT] Product not found for item', item.id, '— skipping');
+      continue;
+    }
 
     const ptype = product.product_type ?? 'physical';
+    console.log('[FULFILLMENT] Item:', item.product_name, '| type:', ptype);
 
     if (ptype === 'digital_code') {
       for (let q = 0; q < item.quantity; q++) {
@@ -245,6 +260,7 @@ export async function fulfillOrder(orderId: string): Promise<void> {
           'product_codes', { product_id: item.product_id, status: 'available' }, 'limit=1'
         );
         if (code) {
+          console.log('[FULFILLMENT] Inventory item selected:', code.id);
           await dbUpdate('product_codes', { id: code.id }, {
             status: 'delivered',
             assigned_to: orderId,
@@ -254,6 +270,8 @@ export async function fulfillOrder(orderId: string): Promise<void> {
             await dbUpdate('order_items', { id: item.id }, { assigned_code: code.code });
           }
           deliveries.push({ productName: item.product_name, type: 'code', code: code.code });
+        } else {
+          console.warn('[FULFILLMENT] No available inventory for', item.product_name);
         }
       }
     } else if (ptype === 'account_product') {
@@ -261,6 +279,7 @@ export async function fulfillOrder(orderId: string): Promise<void> {
         'product_accounts', { product_id: item.product_id, status: 'available' }, 'limit=1'
       );
       if (account) {
+        console.log('[FULFILLMENT] Account selected:', account.id);
         await dbUpdate('product_accounts', { id: account.id }, {
           status: 'delivered',
           assigned_order_id: orderId,
@@ -278,6 +297,7 @@ export async function fulfillOrder(orderId: string): Promise<void> {
           password: account.password,
         });
       } else {
+        console.warn('[FULFILLMENT] No available account inventory for', item.product_name);
         await dbUpdate('orders', { id: orderId }, {
           status: 'waiting_for_inventory',
           updated_at: new Date().toISOString(),
@@ -287,12 +307,17 @@ export async function fulfillOrder(orderId: string): Promise<void> {
     } else if (ptype === 'digital_download' && (item.download_url || product.download_url)) {
       const url = item.download_url ?? product.download_url ?? '';
       deliveries.push({ productName: item.product_name, type: 'download', downloadUrl: url });
+      console.log('[FULFILLMENT] Download URL attached for', item.product_name);
+    } else {
+      console.log('[FULFILLMENT] Product type', ptype, '— no automated delivery');
     }
 
     const newStock = Math.max(0, product.stock - item.quantity);
     await dbUpdate('products', { id: item.product_id }, { stock: newStock, updated_at: new Date().toISOString() });
   }
 
-  await sendEmail(order, orderItems, deliveries).catch(() => null);
+  await sendEmail(order, orderItems, deliveries).catch((e) => console.warn('[FULFILLMENT] Email error:', e));
   await dbUpdate('orders', { id: orderId }, { status: 'delivered', updated_at: new Date().toISOString() });
+  console.log('[FULFILLMENT] Order marked completed');
+  console.log('[FULFILLMENT] SUCCESS — order', orderId, '| deliveries:', deliveries.length);
 }
