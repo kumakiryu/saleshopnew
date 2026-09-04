@@ -45,7 +45,7 @@ async function apiCall(body: Record<string, unknown>) {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
   if (!token) throw new Error('Not authenticated');
-  const res = await fetch('/api/admin-totp', {
+  const res = await fetch('/api/admin?action=totp', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...body, token }),

@@ -57,7 +57,7 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch('/api/list-members', {
+      const res = await fetch('/api/admin?action=list-members', {
         headers: { 'x-admin-token': getAdminToken() },
       });
       const data = await res.json();
@@ -84,7 +84,7 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
     if (!addEmail.trim()) return;
     setAddLoading(true); setAddError(''); setAddMsg('');
     try {
-      const res = await fetch('/api/manage-membership', {
+      const res = await fetch('/api/admin?action=manage-membership', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: addEmail.trim().toLowerCase(), tier: addTier, adminToken: getAdminToken() }),
@@ -101,7 +101,7 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
     if (newPass.length < 8) { setCreateError('Password must be at least 8 characters.'); return; }
     setCreateLoading(true); setCreateError(''); setCreateMsg('');
     try {
-      const res = await fetch('/api/create-member', {
+      const res = await fetch('/api/admin?action=create-member', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

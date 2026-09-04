@@ -57,7 +57,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
 
   async function loadMembers() {
     try {
-      const r = await fetch('/api/list-members', { headers: { 'x-admin-token': getAdminToken() } });
+      const r = await fetch('/api/admin?action=list-members', { headers: { 'x-admin-token': getAdminToken() } });
       if (r.ok) { const d = await r.json(); setMembers(d.members ?? d ?? []); }
     } catch { /* ignore */ }
   }
@@ -65,7 +65,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
   async function submitTokenOp() {
     setTokenOpMsg(''); setTokenOpErr(''); setTokenOpLoading(true);
     try {
-      const res = await fetch('/api/admin-tokens', {
+      const res = await fetch('/api/admin?action=tokens', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
         body: JSON.stringify({ action: tokenOp.action, target_user_id: tokenOp.userId, token_type: tokenOp.type, amount: Number(tokenOp.amount) }),

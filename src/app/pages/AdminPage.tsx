@@ -830,7 +830,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) { alert('Not logged in — please refresh.'); return; }
-      const res = await fetch('/api/admin-fulfill', {
+      const res = await fetch('/api/admin?action=fulfill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, token: session.access_token }),
@@ -887,7 +887,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
         alert('Not logged in — please refresh and log in again.');
         return;
       }
-      const res = await fetch('/api/admin-fulfill', {
+      const res = await fetch('/api/admin?action=fulfill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId: order.id, token: session.access_token }),

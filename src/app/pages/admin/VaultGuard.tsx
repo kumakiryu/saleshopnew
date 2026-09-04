@@ -48,7 +48,7 @@ export default function VaultGuard({ totpEnabled, children, onAudit }: Props) {
       const token = session?.access_token;
       if (!token) throw new Error('Not authenticated');
 
-      const res = await fetch('/api/admin-totp', {
+      const res = await fetch('/api/admin?action=totp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'verify', code, token }),
