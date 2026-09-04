@@ -53,5 +53,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     body: JSON.stringify({ user_id: auth.userId, transaction_type: 'spend', amount: reward.token_cost, reason: `Redeemed: ${reward.name}`, created_at: new Date().toISOString() }),
   });
 
-  return res.status(200).json({ ok: true, reward_name: reward.name, tokens_spent: reward.token_cost, new_balance: newBalance });
+  return res.status(200).json({ ok: true, reward_name: reward.name, tokens_spent: reward.token_cost, new_balance: newBalance, delivery_content: reward.delivery_content ?? null });
 }

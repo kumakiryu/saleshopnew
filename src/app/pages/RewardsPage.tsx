@@ -20,6 +20,7 @@ export default function RewardsPage() {
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [delivery, setDelivery] = useState<{ name: string; content: string } | null>(null);
 
   useEffect(() => {
     if (!user || user.tier === 'normal') { navigate('/'); return; }
@@ -45,8 +46,12 @@ export default function RewardsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setMsg({ text: `🎉 Redeemed "${data.reward_name}"! ${data.tokens_spent} tokens used. New balance: ${data.new_balance}`, ok: true });
         await refreshTokens();
+        if (data.delivery_content) {
+          setDelivery({ name: data.reward_name, content: data.delivery_content });
+        } else {
+          setMsg({ text: `🎉 Redeemed "${data.reward_name}"! ${data.tokens_spent} tokens used. New balance: ${data.new_balance}`, ok: true });
+        }
       } else {
         setMsg({ text: data.error ?? 'Redemption failed', ok: false });
       }
@@ -58,6 +63,25 @@ export default function RewardsPage() {
 
   return (
     <div className="min-h-screen" style={{ background: '#050816', fontFamily: "'Inter', sans-serif" }}>
+      {delivery && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 px-4" style={{ background: 'rgba(0,0,0,0.85)' }}>
+          <div className="w-full max-w-md rounded-2xl p-6" style={{ background: '#13172a', border: `1px solid ${accent}40` }}>
+            <div className="text-center mb-5">
+              <div className="text-4xl mb-2">🎉</div>
+              <h2 className="text-lg font-black tracking-wider" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>REWARD DELIVERED</h2>
+              <p className="text-xs mt-1" style={{ color: '#7b88c0' }}>{delivery.name}</p>
+            </div>
+            <div className="p-4 rounded-xl mb-5" style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: '#7b88c0' }}>Your Reward</p>
+              <pre className="text-sm whitespace-pre-wrap break-all" style={{ color: '#e8eaf6', fontFamily: 'monospace' }}>{delivery.content}</pre>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => navigator.clipboard.writeText(delivery.content)} className="flex-1 py-2.5 rounded-xl text-xs font-bold" style={{ background: `${accent}15`, border: `1px solid ${accent}30`, color: accent, cursor: 'pointer' }}>Copy to Clipboard</button>
+              <button onClick={() => setDelivery(null)} className="flex-1 py-2.5 rounded-xl text-xs font-bold" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#7b88c0', cursor: 'pointer' }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="pointer-events-none fixed inset-0" style={{ background: `radial-gradient(ellipse 60% 40% at 50% 0%, ${isReseller ? 'rgba(0,230,118,0.06)' : 'rgba(255,180,0,0.06)'} 0%, transparent 60%)` }} />
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-16">

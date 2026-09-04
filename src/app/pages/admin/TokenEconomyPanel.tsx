@@ -237,6 +237,11 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
               </div>
             </div>
             {inp('Description', 'description', 'text', 'Optional')}
+            <div className="mt-3">
+              <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: '#7b88c0' }}>Delivery Content <span style={{ color: '#FF8C00' }}>★ Shown to member after redeeming</span></label>
+              <textarea value={(rewardForm as any).delivery_content ?? ''} onChange={e => setRewardForm(f => ({ ...f, delivery_content: e.target.value }))} placeholder="e.g. product key, account details, instructions..."
+                rows={3} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,140,0,0.25)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13, resize: 'vertical', fontFamily: 'monospace' }} />
+            </div>
             <div className="mt-3">{inp('Image URL', 'image_url', 'text', 'https://...')}</div>
             {rewardMsg && <p className="mt-3 text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(0,230,118,0.08)', color: '#00E676' }}>{rewardMsg}</p>}
             {rewardErr && <p className="mt-3 text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(255,68,68,0.08)', color: '#FF6B6B' }}>{rewardErr}</p>}
@@ -256,7 +261,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-[10px] px-2 py-0.5 rounded font-bold" style={{ background: r.active ? 'rgba(0,230,118,0.1)' : 'rgba(255,68,68,0.1)', color: r.active ? '#00E676' : '#FF6B6B' }}>{r.active ? 'Active' : 'Hidden'}</span>
-                  <button onClick={() => { setEditingReward(r); setRewardForm({ name: r.name, description: r.description ?? '', image_url: r.image_url ?? '', token_cost: r.token_cost, membership_type: r.membership_type, stock: r.stock }); }} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)', color: '#00BFFF', cursor: 'pointer' }}>Edit</button>
+                  <button onClick={() => { setEditingReward(r); setRewardForm({ name: r.name, description: r.description ?? '', image_url: r.image_url ?? '', delivery_content: r.delivery_content ?? '', token_cost: r.token_cost, membership_type: r.membership_type, stock: r.stock }); }} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)', color: '#00BFFF', cursor: 'pointer' }}>Edit</button>
                   <button onClick={() => toggleRewardActive(r)} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(255,140,0,0.08)', border: '1px solid rgba(255,140,0,0.2)', color: '#FF8C00', cursor: 'pointer' }}>{r.active ? 'Hide' : 'Show'}</button>
                   <button onClick={() => deleteReward(r.id)} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', color: '#FF6B6B', cursor: 'pointer' }}>Del</button>
                 </div>
