@@ -35,7 +35,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           data: {
             attributes: {
               amount: Math.round(total * 100), // centavos
-              description: `Order ${orderId.slice(0, 8).toUpperCase()}`,
+              description: `Order ${orderId}`,
               remarks: orderId,
               redirect: { success: successUrl, failed: cancelUrl },
             },
