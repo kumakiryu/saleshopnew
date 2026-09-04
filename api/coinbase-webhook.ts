@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from './_types';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { fulfillOrder } from './_shared';
 

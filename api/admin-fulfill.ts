@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from './_types';
 import { fulfillOrder, verifyAdminToken } from './_shared';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

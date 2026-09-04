@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from './_types';
 import crypto from 'crypto';
 import { fulfillOrder, verifyAdminToken } from './_shared';
 

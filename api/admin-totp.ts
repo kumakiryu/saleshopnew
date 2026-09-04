@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from './_types';
 import crypto from 'node:crypto';
 
 const SUPABASE_URL = 'https://hxfccpadsbunynignbwn.supabase.co';
