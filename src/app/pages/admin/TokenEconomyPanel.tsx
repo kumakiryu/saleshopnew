@@ -39,6 +39,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
   const [logsLoading, setLogsLoading] = useState(false);
 
   useEffect(() => { loadAll(); }, []);
+  useEffect(() => { if (subTab === 'logs') loadRedemptionLogs(); }, [subTab]);
 
   async function loadAll() {
     setLoading(true);
@@ -302,21 +303,86 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
             </div>
           </div>
           <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            {rewards.length === 0 ? <p className="px-5 py-8 text-xs" style={{ color: '#3a4570' }}>No reward products yet.</p> : rewards.map(r => (
-              <div key={r.id} className="flex items-center gap-4 px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: r.active ? '#c8d0f0' : '#3a4570' }}>{r.name}</p>
-                  <p className="text-[10px]" style={{ color: '#3a4570' }}>{r.token_cost} <TokenIcon size={11} /> · {r.membership_type} · stock: {r.stock < 0 ? '∞' : r.stock}</p>
+            {rewards.length === 0 ? <p className="px-5 py-8 text-xs" style={{ color: '#3a4570' }}>No reward products yet.</p> : rewards.map(r => {
+              const cc = codeCounts[r.id];
+              const isImporting = importingFor === r.id;
+              return (
+                <div key={r.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div className="flex items-center gap-4 px-5 py-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: r.active ? '#c8d0f0' : '#3a4570' }}>{r.name}</p>
+                      <p className="text-[10px]" style={{ color: '#3a4570' }}>
+                        {r.token_cost} <TokenIcon size={11} /> · {r.membership_type} · stock: {r.stock < 0 ? '∞' : r.stock}
+                        {cc ? <span style={{ color: cc.available > 0 ? '#00E676' : '#FF6B6B' }}> · codes: {cc.available}/{cc.total} avail</span> : null}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-[10px] px-2 py-0.5 rounded font-bold" style={{ background: r.active ? 'rgba(0,230,118,0.1)' : 'rgba(255,68,68,0.1)', color: r.active ? '#00E676' : '#FF6B6B' }}>{r.active ? 'Active' : 'Hidden'}</span>
+                      <button onClick={() => { setEditingReward(r); setRewardForm({ name: r.name, description: r.description ?? '', image_url: r.image_url ?? '', delivery_content: r.delivery_content ?? '', token_cost: r.token_cost, membership_type: r.membership_type, stock: r.stock }); }} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)', color: '#00BFFF', cursor: 'pointer' }}>Edit</button>
+                      <button onClick={() => { setImportingFor(isImporting ? null : r.id); setImportText(''); setImportMsg(''); }} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(138,43,226,0.1)', border: '1px solid rgba(138,43,226,0.25)', color: '#B06EFF', cursor: 'pointer' }}>Codes</button>
+                      <button onClick={() => toggleRewardActive(r)} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(255,140,0,0.08)', border: '1px solid rgba(255,140,0,0.2)', color: '#FF8C00', cursor: 'pointer' }}>{r.active ? 'Hide' : 'Show'}</button>
+                      <button onClick={() => deleteReward(r.id)} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', color: '#FF6B6B', cursor: 'pointer' }}>Del</button>
+                    </div>
+                  </div>
+                  {isImporting && (
+                    <div className="px-5 pb-4" style={{ borderTop: '1px solid rgba(138,43,226,0.15)', background: 'rgba(138,43,226,0.04)' }}>
+                      <p className="text-[10px] uppercase tracking-widest mt-3 mb-2" style={{ color: '#B06EFF' }}>Bulk Import Codes — one per line</p>
+                      <textarea
+                        value={importText}
+                        onChange={e => setImportText(e.target.value)}
+                        placeholder={"CODE001\nCODE002\nCODE003"}
+                        rows={5}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(138,43,226,0.3)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 12, resize: 'vertical', fontFamily: 'monospace' }}
+                      />
+                      <div className="flex items-center gap-3 mt-2">
+                        <button onClick={() => importBulkCodes(r.id)} disabled={importLoading || !importText.trim()} className="px-4 py-2 rounded-lg text-xs font-bold" style={{ background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.35)', color: '#B06EFF', cursor: importLoading || !importText.trim() ? 'not-allowed' : 'pointer' }}>
+                          {importLoading ? 'Importing...' : `Import ${importText.split('\n').filter(l => l.trim()).length} codes`}
+                        </button>
+                        {importMsg && <span className="text-xs" style={{ color: importMsg.startsWith('✓') ? '#00E676' : '#FF6B6B' }}>{importMsg}</span>}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-[10px] px-2 py-0.5 rounded font-bold" style={{ background: r.active ? 'rgba(0,230,118,0.1)' : 'rgba(255,68,68,0.1)', color: r.active ? '#00E676' : '#FF6B6B' }}>{r.active ? 'Active' : 'Hidden'}</span>
-                  <button onClick={() => { setEditingReward(r); setRewardForm({ name: r.name, description: r.description ?? '', image_url: r.image_url ?? '', delivery_content: r.delivery_content ?? '', token_cost: r.token_cost, membership_type: r.membership_type, stock: r.stock }); }} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)', color: '#00BFFF', cursor: 'pointer' }}>Edit</button>
-                  <button onClick={() => toggleRewardActive(r)} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(255,140,0,0.08)', border: '1px solid rgba(255,140,0,0.2)', color: '#FF8C00', cursor: 'pointer' }}>{r.active ? 'Hide' : 'Show'}</button>
-                  <button onClick={() => deleteReward(r.id)} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', color: '#FF6B6B', cursor: 'pointer' }}>Del</button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+        </div>
+      )}
+
+      {/* Redemption Logs */}
+      {subTab === 'logs' && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-bold uppercase tracking-widest" style={{ color: '#c8d0f0' }}>Redemption History</p>
+            <button onClick={loadRedemptionLogs} disabled={logsLoading} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)', color: '#00BFFF', cursor: 'pointer' }}>
+              {logsLoading ? 'Loading...' : 'Refresh'}
+            </button>
+          </div>
+          {redemptionLogs.length === 0 ? (
+            <div className="rounded-2xl py-12 text-center" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-3xl mb-2">📋</p>
+              <p className="text-xs" style={{ color: '#3a4570' }}>No redemptions yet. Click Refresh to load.</p>
+            </div>
+          ) : (
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="grid px-5 py-2" style={{ gridTemplateColumns: '1fr 1fr 80px 1fr', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                {['Date', 'Member', 'Tokens', 'Reward / Code'].map(h => (
+                  <span key={h} className="text-[10px] uppercase tracking-widest" style={{ color: '#3a4570' }}>{h}</span>
+                ))}
+              </div>
+              {redemptionLogs.map((log: any, i: number) => (
+                <div key={log.id ?? i} className="grid items-start px-5 py-3 gap-2" style={{ gridTemplateColumns: '1fr 1fr 80px 1fr', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <span className="text-[11px]" style={{ color: '#7b88c0' }}>{new Date(log.created_at).toLocaleDateString()} {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-[11px] truncate" style={{ color: '#c8d0f0' }}>{log.user_email ?? log.user_id}</span>
+                  <span className="text-[11px] font-bold" style={{ color: '#FFB400' }}>{log.tokens_spent} <TokenIcon size={10} /></span>
+                  <div>
+                    <p className="text-[11px] font-semibold" style={{ color: '#e8eaf6' }}>{log.reward_name}</p>
+                    {log.code_delivered && <p className="text-[10px] mt-0.5 font-mono break-all" style={{ color: '#B06EFF' }}>{log.code_delivered}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
