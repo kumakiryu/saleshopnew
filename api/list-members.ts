@@ -29,9 +29,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!membershipsRes.ok) return res.status(500).json({ error: 'Failed to fetch memberships' });
   if (!usersRes.ok) return res.status(500).json({ error: 'Failed to fetch users' });
 
-  const memberships = await membershipsRes.json();
-  const usersData = await usersRes.json();
-  const users: any[] = usersData?.users ?? [];
+  const memberships = (await membershipsRes.json()) as any[];
+  const usersData = (await usersRes.json()) as { users: { id: string; email?: string }[] };
+  const users = usersData.users ?? [];
 
   const emailMap: Record<string, string> = {};
   for (const u of users) {

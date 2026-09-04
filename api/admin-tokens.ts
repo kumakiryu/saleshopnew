@@ -20,7 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const col = token_type === 'vip' ? 'vip_tokens' : 'reseller_tokens';
 
   const existing = await fetch(`${SUPABASE_URL}/rest/v1/user_tokens?user_id=eq.${target_user_id}&select=*&limit=1`, { headers: svcHeaders });
-  const rows = existing.ok ? await existing.json() : [];
+  const rows = existing.ok ? (await existing.json() as any[]) : [];
   const row = rows?.[0];
 
   let newVal: number;

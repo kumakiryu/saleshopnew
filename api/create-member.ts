@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }),
   });
 
-  const createData = await createRes.json();
+  const createData = await createRes.json() as any;
   if (!createRes.ok) {
     return res.status(400).json({
       error: createData?.msg ?? createData?.message ?? createData?.error_description ?? 'Account creation failed',
@@ -58,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }),
     });
     if (!upsertRes.ok) {
-      const err = await upsertRes.json().catch(() => ({}));
+      const err = await upsertRes.json().catch(() => ({})) as any;
       return res.status(500).json({
         error: err?.message ?? 'Account created but tier assignment failed. Use Assign Tier to fix.',
       });

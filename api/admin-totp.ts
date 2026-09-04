@@ -76,7 +76,7 @@ async function svcGet<T>(table: string, filters: Record<string, unknown>, select
   for (const [k, v] of Object.entries(filters)) qs.append(k, `eq.${v}`);
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, { headers: svcH() });
   if (!r.ok) return null;
-  const rows = await r.json();
+  const rows = await r.json() as any[];
   return Array.isArray(rows) ? (rows[0] ?? null) : null;
 }
 
@@ -116,12 +116,12 @@ async function svcGetUserById(userId: string): Promise<{ email?: string } | null
 async function getAdminUser(token: string): Promise<{ user: { id: string; email: string }; admin: Record<string, unknown> } | null> {
   const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: anonH(token) });
   if (!userRes.ok) return null;
-  const user = await userRes.json();
+  const user = await userRes.json() as any;
   if (!user?.id) return null;
 
   const adminRes = await fetch(`${SUPABASE_URL}/rest/v1/admins?id=eq.${user.id}&select=*&limit=1`, { headers: anonH(token) });
   if (!adminRes.ok) return null;
-  const rows = await adminRes.json();
+  const rows = await adminRes.json() as any[];
   if (!Array.isArray(rows) || rows.length === 0) return null;
 
   const admin = rows[0];

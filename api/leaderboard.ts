@@ -15,12 +15,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     { headers: svcHeaders }
   );
   if (!tokensRes.ok) return res.status(500).json({ error: 'Failed to fetch leaderboard' });
-  const rows: { user_id: string; [k: string]: number | string }[] = await tokensRes.json();
+  const rows = (await tokensRes.json()) as { user_id: string; [k: string]: string | number }[];
 
   const usersRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=1000`, {
     headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
   });
-  const usersData = usersRes.ok ? await usersRes.json() : { users: [] };
+  const usersData = usersRes.ok
+    ? ((await usersRes.json()) as { users: { id: string; email?: string }[] })
+    : { users: [] };
   const emailMap: Record<string, string> = {};
   for (const u of usersData.users ?? []) emailMap[u.id] = u.email ?? u.id;
 

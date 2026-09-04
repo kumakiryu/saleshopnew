@@ -22,15 +22,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     fetch(`${SUPABASE_URL}/rest/v1/user_tokens?user_id=eq.${auth.userId}&select=*&limit=1`, { headers: svcHeaders }),
   ]);
 
-  const reward = rewardRes.ok ? (await rewardRes.json())?.[0] : null;
+  const reward = rewardRes.ok ? ((await rewardRes.json() as any[]))?.[0] : null;
   if (!reward || !reward.active) return res.status(404).json({ error: 'Reward not found or inactive' });
   if (reward.stock === 0) return res.status(400).json({ error: 'Out of stock' });
 
-  const tier = membershipRes.ok ? (await membershipRes.json())?.[0]?.tier ?? 'normal' : 'normal';
+  const tier = membershipRes.ok ? ((await membershipRes.json() as any[]))?.[0]?.tier ?? 'normal' : 'normal';
   if (tier === 'normal') return res.status(403).json({ error: 'Members only' });
   if (reward.membership_type !== 'both' && reward.membership_type !== tier) return res.status(403).json({ error: `This reward is for ${reward.membership_type} members only` });
 
-  const tokensRow = tokensRes.ok ? (await tokensRes.json())?.[0] : null;
+  const tokensRow = tokensRes.ok ? ((await tokensRes.json() as any[]))?.[0] : null;
   const col = tier === 'vip' ? 'vip_tokens' : 'reseller_tokens';
   const balance = tokensRow?.[col] ?? 0;
   if (balance < reward.token_cost) return res.status(400).json({ error: `Insufficient tokens. Need ${reward.token_cost}, have ${balance}` });

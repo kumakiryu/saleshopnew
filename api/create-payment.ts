@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }),
       });
 
-      const pmData = await pmRes.json();
+      const pmData = await pmRes.json() as any;
       if (!pmRes.ok) {
         const msg = pmData?.errors?.[0]?.detail ?? 'PayMongo error';
         return res.status(pmRes.status).json({ error: msg });
@@ -75,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }),
       });
 
-      const cbData = await cbRes.json();
+      const cbData = await cbRes.json() as any;
       if (!cbRes.ok) {
         const msg = cbData?.error?.message ?? 'Coinbase Commerce error';
         return res.status(cbRes.status).json({ error: msg });
@@ -104,7 +104,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }),
       });
 
-      const cpData = await cpRes.json();
+      const cpData = await cpRes.json() as any;
       if (!cpRes.ok) {
         const msg = cpData?.detail ?? cpData?.message ?? 'Coins.ph error';
         return res.status(cpRes.status).json({ error: msg });

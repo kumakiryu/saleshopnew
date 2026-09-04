@@ -38,10 +38,10 @@ async function svcInsert<T>(table: string, data: unknown): Promise<{ data: T | n
     body: JSON.stringify(data),
   });
   if (!r.ok) {
-    const err = await r.json().catch(() => ({ message: `HTTP ${r.status}` }));
+    const err = await r.json().catch(() => ({ message: `HTTP ${r.status}` })) as any;
     return { data: null, error: err };
   }
-  const rows = await r.json();
+  const rows = await r.json() as any;
   return { data: Array.isArray(rows) ? (rows[0] ?? null) : rows, error: null };
 }
 
@@ -84,7 +84,7 @@ async function pollCoinsph(): Promise<{ checked: number; processed: number; debu
     throw new Error(`Coins.ph API returned ${cpRes.status}: ${txt.slice(0, 200)}`);
   }
 
-  const cpData = await cpRes.json();
+  const cpData = await cpRes.json() as any;
   const deposits: Record<string, unknown>[] = Array.isArray(cpData)
     ? cpData
     : Array.isArray(cpData.data) ? cpData.data

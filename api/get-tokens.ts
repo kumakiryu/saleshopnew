@@ -13,22 +13,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
   });
   if (!userRes.ok) return res.status(401).json({ error: 'Unauthorized' });
-  const user = await userRes.json();
+  const user = await userRes.json() as any;
   if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
   const svcHeaders = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' };
 
   const tokensRes = await fetch(`${SUPABASE_URL}/rest/v1/user_tokens?user_id=eq.${user.id}&select=*&limit=1`, { headers: svcHeaders });
-  const rows = tokensRes.ok ? await tokensRes.json() : [];
+  const rows: { vip_tokens?: number; reseller_tokens?: number }[] = tokensRes.ok
+    ? ((await tokensRes.json()) as { vip_tokens?: number; reseller_tokens?: number }[])
+    : [];
   const row = rows?.[0] ?? { vip_tokens: 0, reseller_tokens: 0 };
 
   const earnRes = await fetch(`${SUPABASE_URL}/rest/v1/token_transactions?user_id=eq.${user.id}&transaction_type=in.(earn,topup)&select=amount`, { headers: svcHeaders });
-  const earnRows = earnRes.ok ? await earnRes.json() : [];
+  const earnRows: { amount: number }[] = earnRes.ok
+    ? ((await earnRes.json()) as { amount: number }[])
+    : [];
   const lifetime_earned = earnRows.reduce((s: number, r: { amount: number }) => s + (r.amount ?? 0), 0);
 
   const spendRes = await fetch(`${SUPABASE_URL}/rest/v1/token_transactions?user_id=eq.${user.id}&transaction_type=eq.spend&select=amount`, { headers: svcHeaders });
-  const spendRows = spendRes.ok ? await spendRes.json() : [];
+  const spendRows: { amount: number }[] = spendRes.ok
+    ? ((await spendRes.json()) as { amount: number }[])
+    : [];
   const lifetime_spent = spendRows.reduce((s: number, r: { amount: number }) => s + (r.amount ?? 0), 0);
 
   return res.status(200).json({
