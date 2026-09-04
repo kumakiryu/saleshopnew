@@ -204,7 +204,7 @@ async function sendEmail(order: Order, items: OrderItem[], deliveries: AssignedD
         html: buildEmailHtml(order, items, deliveries),
       }),
     });
-    const rj = await r.json().catch(() => ({}));
+    const rj = await r.json().catch(() => ({})) as any;
     await logEmail(order.id, order.customer_email, subject, r.ok ? 'sent' : 'failed', rj?.id, r.ok ? undefined : JSON.stringify(rj));
   } catch (e: any) {
     await logEmail(order.id, order.customer_email, subject, 'failed', undefined, e?.message ?? String(e));
@@ -221,7 +221,7 @@ export async function verifyCustomerToken(token: string): Promise<{ ok: boolean;
     headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
   });
   if (!userRes.ok) return { ok: false };
-  const user = await userRes.json();
+  const user = await userRes.json() as any;
   if (!user?.id) return { ok: false };
   return { ok: true, userId: user.id, email: user.email };
 }
@@ -231,14 +231,14 @@ export async function verifyAdminToken(token: string): Promise<{ ok: boolean; us
     headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
   });
   if (!userRes.ok) return { ok: false, reason: 'Not authenticated' };
-  const user = await userRes.json();
+  const user = await userRes.json() as any;
   if (!user?.id) return { ok: false, reason: 'Not authenticated' };
 
   const adminRes = await fetch(`${SUPABASE_URL}/rest/v1/admins?id=eq.${user.id}&select=id&limit=1`, {
     headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
   });
   if (!adminRes.ok) return { ok: false, reason: 'Admin check failed' };
-  const rows = await adminRes.json();
+  const rows = await adminRes.json() as any[];
   if (!Array.isArray(rows) || rows.length === 0) return { ok: false, reason: 'Not an admin' };
   return { ok: true, userId: user.id };
 }
@@ -276,7 +276,7 @@ async function awardTokensForOrder(order: Order): Promise<void> {
       headers: { 'apikey': getServiceKey(), 'Authorization': `Bearer ${getServiceKey()}` },
     });
     if (!usersRes.ok) return;
-    const usersData = await usersRes.json();
+    const usersData = await usersRes.json() as any;
     const userId = usersData?.users?.[0]?.id ?? usersData?.[0]?.id;
     if (!userId) return;
 
