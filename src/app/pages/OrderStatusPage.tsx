@@ -69,7 +69,7 @@ export default function OrderStatusPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
-  const [showPayModal, setShowPayModal] = useState(false);
+  const [payClicked, setPayClicked] = useState(false);
 
   // Load stored PayMongo URL from checkout page
   useEffect(() => {
@@ -96,7 +96,6 @@ export default function OrderStatusPage() {
       if (o.status !== 'pending') {
         localStorage.removeItem(`pm_url_${id}`);
         setPaymentUrl(null);
-        setShowPayModal(false);
       }
     }
 
@@ -397,22 +396,46 @@ export default function OrderStatusPage() {
           </motion.div>
         )}
 
-        {/* Pay Now — opens PayMongo in a modal overlay */}
+        {/* Pay Now — opens PayMongo in a new tab, this page keeps polling */}
         {order.status === 'pending' && order.payment_method !== 'coinsph' && paymentUrl && !paymentResult && (
           <motion.div className="rounded-2xl overflow-hidden mb-5"
             style={{ background: 'rgba(0,191,255,0.05)', border: '1px solid rgba(0,191,255,0.25)' }}
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
             <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(0,191,255,0.1)' }}>
-              <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>Complete Your Payment</p>
-              <p className="text-[10px] mt-0.5" style={{ color: '#3a4570' }}>Pay securely without leaving this page. Your order updates automatically once payment is confirmed.</p>
+              <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+                {payClicked ? 'Waiting for Payment Confirmation' : 'Complete Your Payment'}
+              </p>
+              <p className="text-[10px] mt-0.5" style={{ color: '#3a4570' }}>
+                {payClicked
+                  ? 'Payment window is open. Once you pay, this page will update automatically.'
+                  : 'A payment tab will open. Come back here after paying — this page updates automatically.'}
+              </p>
             </div>
-            <div className="px-5 py-4">
-              <button
-                onClick={() => setShowPayModal(true)}
-                className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl text-sm font-bold"
-                style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.18), rgba(0,191,255,0.08))', border: '1px solid rgba(0,191,255,0.45)', color: '#00BFFF', cursor: 'pointer', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.06em' }}>
-                Pay Now
-              </button>
+            <div className="px-5 py-4 flex flex-col gap-3">
+              {!payClicked ? (
+                <button
+                  onClick={() => { window.open(paymentUrl, '_blank', 'noopener,noreferrer'); setPayClicked(true); }}
+                  className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl text-sm font-bold"
+                  style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.18), rgba(0,191,255,0.08))', border: '1px solid rgba(0,191,255,0.45)', color: '#00BFFF', cursor: 'pointer', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.06em' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                  Pay Now
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(0,191,255,0.06)', border: '1px solid rgba(0,191,255,0.15)' }}>
+                    <div className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" style={{ background: '#00BFFF' }} />
+                    <p className="text-xs" style={{ color: '#7b88c0' }}>Checking payment status every 3 seconds...</p>
+                  </div>
+                  <button
+                    onClick={() => window.open(paymentUrl, '_blank', 'noopener,noreferrer')}
+                    className="text-[10px] py-2 rounded-lg"
+                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#3a4570', cursor: 'pointer' }}>
+                    Reopen Payment Window
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -517,49 +540,6 @@ export default function OrderStatusPage() {
       </div>
     </div>
 
-    {/* PayMongo payment modal */}
-    {showPayModal && paymentUrl && (
-      <div
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-        style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)' }}
-        onClick={e => { if (e.target === e.currentTarget) setShowPayModal(false); }}>
-        <div className="relative w-full sm:max-w-lg flex flex-col rounded-t-2xl sm:rounded-2xl overflow-hidden"
-          style={{ height: '90vh', background: '#050816', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 0 60px rgba(0,191,255,0.15)' }}>
-
-          {/* Modal header */}
-          <div className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)' }}>
-            <div className="flex items-center gap-2.5">
-              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#00BFFF' }} />
-              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>Secure Payment</p>
-            </div>
-            <button
-              onClick={() => setShowPayModal(false)}
-              className="flex items-center justify-center w-7 h-7 rounded-lg"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#7b88c0', cursor: 'pointer', fontSize: '14px' }}>
-              ✕
-            </button>
-          </div>
-
-          {/* PayMongo iframe */}
-          <iframe
-            src={paymentUrl}
-            title="PayMongo Checkout"
-            className="flex-1 w-full"
-            style={{ border: 'none', background: '#fff' }}
-            allow="payment"
-          />
-
-          {/* Footer note */}
-          <div className="px-4 py-2.5 flex-shrink-0 text-center"
-            style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.3)' }}>
-            <p className="text-[10px]" style={{ color: '#2e3a5a' }}>
-              This page updates automatically once your payment is confirmed. You can close this anytime.
-            </p>
-          </div>
-        </div>
-      </div>
-    )}
     </>
   );
 }
