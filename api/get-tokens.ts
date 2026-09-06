@@ -25,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     : [];
   const row = rows?.[0] ?? { vip_tokens: 0, reseller_tokens: 0 };
 
-  const earnRes = await fetch(`${SUPABASE_URL}/rest/v1/token_transactions?user_id=eq.${user.id}&transaction_type=in.(earn,topup)&select=amount`, { headers: svcHeaders });
+  const earnRes = await fetch(`${SUPABASE_URL}/rest/v1/token_transactions?user_id=eq.${user.id}&transaction_type=eq.earn&select=amount`, { headers: svcHeaders });
   const earnRows: { amount: number }[] = earnRes.ok
     ? ((await earnRes.json()) as { amount: number }[])
     : [];

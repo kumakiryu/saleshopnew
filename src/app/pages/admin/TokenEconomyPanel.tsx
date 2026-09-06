@@ -8,7 +8,7 @@ function getAdminToken() {
   try { const s = localStorage.getItem('sb_session'); return s ? JSON.parse(s).access_token : ''; } catch { return ''; }
 }
 
-type SubTab = 'overview' | 'manage' | 'rewards' | 'leaderboard' | 'logs';
+type SubTab = 'overview' | 'manage' | 'rewards' | 'leaderboard' | 'logs' | 'pricing';
 
 export default function TokenEconomyPanel({ adminToken }: Props) {
   const [subTab, setSubTab] = useState<SubTab>('overview');
@@ -38,8 +38,14 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
   const [redemptionLogs, setRedemptionLogs] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
 
+  const [topupPackages, setTopupPackages] = useState<{ id: string; label: string; tokens: number; price: number; highlight: boolean }[]>([]);
+  const [customRate, setCustomRate] = useState(1);
+  const [pricingSaving, setPricingSaving] = useState(false);
+  const [pricingMsg, setPricingMsg] = useState('');
+
   useEffect(() => { loadAll(); }, []);
   useEffect(() => { if (subTab === 'logs') loadRedemptionLogs(); }, [subTab]);
+  useEffect(() => { if (subTab === 'pricing') loadPricing(); }, [subTab]);
 
   async function loadAll() {
     setLoading(true);
@@ -84,6 +90,40 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
       const r = await fetch('/api/admin?action=redemption-logs', { headers: { 'x-admin-token': getAdminToken() } });
       if (r.ok) setRedemptionLogs(await r.json());
     } catch { /* ignore */ } finally { setLogsLoading(false); }
+  }
+
+  async function loadPricing() {
+    try {
+      const [pkgsR, rateR] = await Promise.all([
+        fetch('/api/site-config?key=topup_packages'),
+        fetch('/api/site-config?key=topup_custom_rate'),
+      ]);
+      if (pkgsR.ok) { const d = await pkgsR.json(); if (Array.isArray(d)) setTopupPackages(d); }
+      if (rateR.ok) { const d = await rateR.json(); if (typeof d === 'number') setCustomRate(d); }
+    } catch { /* ignore */ }
+  }
+
+  async function savePricing() {
+    setPricingSaving(true); setPricingMsg('');
+    try {
+      await Promise.all([
+        fetch('/api/admin?action=set-config', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() }, body: JSON.stringify({ key: 'topup_packages', value: topupPackages }) }),
+        fetch('/api/admin?action=set-config', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() }, body: JSON.stringify({ key: 'topup_custom_rate', value: customRate }) }),
+      ]);
+      setPricingMsg('✓ Pricing saved');
+    } catch { setPricingMsg('Error saving'); } finally { setPricingSaving(false); }
+  }
+
+  function updatePkg(idx: number, field: string, val: string | number | boolean) {
+    setTopupPackages(prev => prev.map((p, i) => i === idx ? { ...p, [field]: val } : p));
+  }
+
+  function addPkg() {
+    setTopupPackages(prev => [...prev, { id: `pkg_${Date.now()}`, label: 'New', tokens: 100, price: 100, highlight: false }]);
+  }
+
+  function removePkg(idx: number) {
+    setTopupPackages(prev => prev.filter((_, i) => i !== idx));
   }
 
   async function loadLeaders() {
@@ -168,6 +208,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
     { key: 'overview', label: 'Overview' },
     { key: 'manage', label: 'Manage Tokens' },
     { key: 'rewards', label: 'Reward Products' },
+    { key: 'pricing', label: 'Top-Up Pricing' },
     { key: 'leaderboard', label: 'Leaderboards' },
     { key: 'logs', label: 'Redemption Logs' },
   ];
@@ -383,6 +424,53 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Top-Up Pricing */}
+      {subTab === 'pricing' && (
+        <div className="max-w-2xl">
+          <div className="p-5 rounded-2xl mb-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-sm font-bold mb-4 uppercase tracking-widest" style={{ color: '#c8d0f0' }}>Token Packages</p>
+            <div className="flex flex-col gap-3 mb-4">
+              {topupPackages.map((pkg, i) => (
+                <div key={pkg.id} className="grid gap-2 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', gridTemplateColumns: '1fr 80px 80px auto auto' }}>
+                  <input value={pkg.label} onChange={e => updatePkg(i, 'label', e.target.value)} placeholder="Label"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 13 }} />
+                  <div className="relative">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs" style={{ color: '#3a4570' }}>₱</span>
+                    <input type="number" value={pkg.price} onChange={e => updatePkg(i, 'price', Number(e.target.value))} placeholder="Price"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 6, padding: '5px 10px 5px 18px', fontSize: 13, width: '100%' }} />
+                  </div>
+                  <input type="number" value={pkg.tokens} onChange={e => updatePkg(i, 'tokens', Number(e.target.value))} placeholder="Tokens"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 13 }} />
+                  <label className="flex items-center gap-1.5 cursor-pointer text-[11px]" style={{ color: pkg.highlight ? '#FFB400' : '#3a4570', whiteSpace: 'nowrap' }}>
+                    <input type="checkbox" checked={pkg.highlight} onChange={e => updatePkg(i, 'highlight', e.target.checked)} />
+                    Best
+                  </label>
+                  <button onClick={() => removePkg(i)} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', color: '#FF6B6B', cursor: 'pointer' }}>✕</button>
+                </div>
+              ))}
+            </div>
+            <button onClick={addPkg} className="px-4 py-2 rounded-lg text-xs font-bold mb-1" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)', color: '#00BFFF', cursor: 'pointer' }}>+ Add Package</button>
+          </div>
+
+          <div className="p-5 rounded-2xl mb-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-sm font-bold mb-3 uppercase tracking-widest" style={{ color: '#c8d0f0' }}>Custom Amount Rate</p>
+            <p className="text-xs mb-3" style={{ color: '#7b88c0' }}>How many tokens per ₱1 for custom amount top-ups. Default: 1 token per ₱1.</p>
+            <div className="flex items-center gap-3">
+              <span className="text-sm" style={{ color: '#7b88c0' }}>₱1 =</span>
+              <input type="number" min="0.01" step="0.01" value={customRate} onChange={e => setCustomRate(Number(e.target.value))}
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13, width: 100 }} />
+              <span className="text-sm" style={{ color: '#7b88c0' }}>tokens</span>
+            </div>
+          </div>
+
+          {pricingMsg && <p className="mb-3 text-xs px-3 py-2 rounded-lg" style={{ background: pricingMsg.startsWith('✓') ? 'rgba(0,230,118,0.08)' : 'rgba(255,68,68,0.08)', color: pricingMsg.startsWith('✓') ? '#00E676' : '#FF6B6B' }}>{pricingMsg}</p>}
+          <button onClick={savePricing} disabled={pricingSaving} className="px-6 py-3 rounded-xl text-sm font-bold" style={{ background: 'rgba(255,180,0,0.12)', border: '1px solid rgba(255,180,0,0.3)', color: '#FFB400', cursor: 'pointer' }}>
+            {pricingSaving ? 'Saving...' : 'Save Pricing'}
+          </button>
+          <p className="mt-3 text-[11px]" style={{ color: '#3a4570' }}>Changes apply immediately. Requires the <code style={{ color: '#00BFFF' }}>site_config</code> table — see SQL below.</p>
         </div>
       )}
 

@@ -348,6 +348,23 @@ async function handleRedemptionLogs(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json(r.ok ? await r.json() : []);
 }
 
+// ── Action: set-config ────────────────────────────────────────────────────────
+
+async function handleSetConfig(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') return res.status(405).end();
+  const token = String(req.headers['x-admin-token'] ?? '');
+  const auth = await verifyAdminToken(token);
+  if (!auth.ok) return res.status(403).json({ error: 'Forbidden' });
+  const { key, value } = req.body ?? {};
+  if (!key || value === undefined) return res.status(400).json({ error: 'key and value required' });
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/site_config`, {
+    method: 'POST',
+    headers: { ...svcH(), Prefer: 'return=minimal,resolution=merge-duplicates,on_conflict=key' },
+    body: JSON.stringify({ key, value, updated_at: new Date().toISOString() }),
+  });
+  return res.status(r.ok ? 200 : 500).json(r.ok ? { ok: true } : { error: 'Failed to save' });
+}
+
 // ── Main dispatcher ───────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -361,6 +378,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'list-members': return await handleListMembers(req, res);
       case 'manage-membership': return await handleManageMembership(req, res);
       case 'redemption-logs': return await handleRedemptionLogs(req, res);
+      case 'set-config': return await handleSetConfig(req, res);
       default: return res.status(400).json({ error: `Unknown action: ${action}` });
     }
   } catch (err: unknown) {

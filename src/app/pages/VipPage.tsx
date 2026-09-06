@@ -40,7 +40,7 @@ export default function VipPage() {
         background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255,180,0,0.08) 0%, transparent 60%)',
       }} />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-4 flex items-center justify-between">
+      <div className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-4 flex items-center justify-between">
         <button onClick={() => navigate('/')} className="flex items-center gap-2 text-sm" style={{ color: '#7b88c0', background: 'none', border: 'none', cursor: 'pointer' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           Back to Shop

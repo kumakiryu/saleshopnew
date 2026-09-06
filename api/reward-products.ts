@@ -76,7 +76,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'DELETE') {
     const id = req.query.id as string;
     if (!id) return res.status(400).json({ error: 'id required' });
-    await fetch(`${SUPABASE_URL}/rest/v1/reward_products?id=eq.${id}`, { method: 'DELETE', headers: svcHeaders });
+    // Delete associated codes first to avoid FK constraint violations
+    await fetch(`${SUPABASE_URL}/rest/v1/reward_codes?reward_id=eq.${id}`, { method: 'DELETE', headers: { ...svcHeaders, Prefer: 'return=minimal' } });
+    await fetch(`${SUPABASE_URL}/rest/v1/reward_products?id=eq.${id}`, { method: 'DELETE', headers: { ...svcHeaders, Prefer: 'return=minimal' } });
     return res.status(200).json({ ok: true });
   }
 
