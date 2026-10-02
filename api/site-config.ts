@@ -3,13 +3,8 @@ import type { VercelRequest, VercelResponse } from './_types';
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'https://hxfccpadsbunynignbwn.supabase.co';
 
 const DEFAULTS: Record<string, unknown> = {
-  topup_packages: [
-    { id: 'starter', label: 'Starter', tokens: 50, price: 50, highlight: false },
-    { id: 'popular', label: 'Popular', tokens: 100, price: 95, highlight: true },
-    { id: 'pro', label: 'Pro', tokens: 250, price: 225, highlight: false },
-    { id: 'elite', label: 'Elite', tokens: 500, price: 420, highlight: false },
-  ],
-  topup_custom_rate: 1,
+  topup_pkg_500: { price: 500, tokens: 500 },
+  topup_pkg_1000: { price: 1000, tokens: 1000 },
   bg_music_url: '',
   music_name: '',
   music_artist: '',

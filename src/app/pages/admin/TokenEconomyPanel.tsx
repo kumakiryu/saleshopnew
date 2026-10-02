@@ -38,8 +38,10 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
   const [redemptionLogs, setRedemptionLogs] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
 
-  const [topupPackages, setTopupPackages] = useState<{ id: string; label: string; tokens: number; price: number; highlight: boolean }[]>([]);
-  const [customRate, setCustomRate] = useState(1);
+  const [pkg500Price, setPkg500Price] = useState(500);
+  const [pkg500Tokens, setPkg500Tokens] = useState(500);
+  const [pkg1000Price, setPkg1000Price] = useState(1000);
+  const [pkg1000Tokens, setPkg1000Tokens] = useState(1000);
   const [bgMusicUrl, setBgMusicUrl] = useState('');
   const [musicName, setMusicName] = useState('');
   const [musicArtist, setMusicArtist] = useState('');
@@ -98,11 +100,11 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
 
   async function loadPricing() {
     try {
-      const keys = ['topup_packages', 'topup_custom_rate', 'bg_music_url', 'music_name', 'music_artist', 'music_youtube_url'];
+      const keys = ['topup_pkg_500', 'topup_pkg_1000', 'bg_music_url', 'music_name', 'music_artist', 'music_youtube_url'];
       const results = await Promise.all(keys.map(k => fetch(`/api/site-config?key=${k}`).then(r => r.ok ? r.json() : null)));
-      const [pkgs, rate, musicUrl, name, artist, ytUrl] = results;
-      if (Array.isArray(pkgs)) setTopupPackages(pkgs);
-      if (typeof rate === 'number') setCustomRate(rate);
+      const [p500, p1000, musicUrl, name, artist, ytUrl] = results;
+      if (p500 && typeof p500 === 'object') { if (typeof p500.price === 'number') setPkg500Price(p500.price); if (typeof p500.tokens === 'number') setPkg500Tokens(p500.tokens); }
+      if (p1000 && typeof p1000 === 'object') { if (typeof p1000.price === 'number') setPkg1000Price(p1000.price); if (typeof p1000.tokens === 'number') setPkg1000Tokens(p1000.tokens); }
       if (typeof musicUrl === 'string') setBgMusicUrl(musicUrl);
       if (typeof name === 'string') setMusicName(name);
       if (typeof artist === 'string') setMusicArtist(artist);
@@ -115,8 +117,8 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
     try {
       const headers = { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() };
       const saves = [
-        { key: 'topup_packages', value: topupPackages },
-        { key: 'topup_custom_rate', value: customRate },
+        { key: 'topup_pkg_500', value: { price: pkg500Price, tokens: pkg500Tokens } },
+        { key: 'topup_pkg_1000', value: { price: pkg1000Price, tokens: pkg1000Tokens } },
         { key: 'bg_music_url', value: bgMusicUrl },
         { key: 'music_name', value: musicName },
         { key: 'music_artist', value: musicArtist },
@@ -138,18 +140,6 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
     } finally {
       setPricingSaving(false);
     }
-  }
-
-  function updatePkg(idx: number, field: string, val: string | number | boolean) {
-    setTopupPackages(prev => prev.map((p, i) => i === idx ? { ...p, [field]: val } : p));
-  }
-
-  function addPkg() {
-    setTopupPackages(prev => [...prev, { id: `pkg_${Date.now()}`, label: 'New', tokens: 100, price: 100, highlight: false }]);
-  }
-
-  function removePkg(idx: number) {
-    setTopupPackages(prev => prev.filter((_, i) => i !== idx));
   }
 
   async function loadLeaders() {
@@ -456,39 +446,35 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
       {/* Top-Up Pricing */}
       {subTab === 'pricing' && (
         <div className="max-w-2xl">
+
+          {/* Package editor */}
           <div className="p-5 rounded-2xl mb-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p className="text-sm font-bold mb-4 uppercase tracking-widest" style={{ color: '#c8d0f0' }}>Token Packages</p>
-            <div className="flex flex-col gap-3 mb-4">
-              {topupPackages.map((pkg, i) => (
-                <div key={pkg.id} className="grid gap-2 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', gridTemplateColumns: '1fr 80px 80px auto auto' }}>
-                  <input value={pkg.label} onChange={e => updatePkg(i, 'label', e.target.value)} placeholder="Label"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 13 }} />
-                  <div className="relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs" style={{ color: '#3a4570' }}>₱</span>
-                    <input type="number" value={pkg.price} onChange={e => updatePkg(i, 'price', Number(e.target.value))} placeholder="Price"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 6, padding: '5px 10px 5px 18px', fontSize: 13, width: '100%' }} />
+            <p className="text-sm font-bold mb-1 uppercase tracking-widest" style={{ color: '#c8d0f0' }}>⚡ Top-Up Packages</p>
+            <p className="text-xs mb-4" style={{ color: '#7b88c0' }}>Set the price (₱) and token amount for each of the two packages shown at checkout.</p>
+            <div className="flex flex-col gap-3">
+              {([
+                { label: 'Package 1', price: pkg500Price, tokens: pkg500Tokens, setPrice: setPkg500Price, setTokens: setPkg500Tokens, accent: '#7b88c0' },
+                { label: 'Package 2 (Best Value)', price: pkg1000Price, tokens: pkg1000Tokens, setPrice: setPkg1000Price, setTokens: setPkg1000Tokens, accent: '#FFB400' },
+              ] as const).map(pkg => (
+                <div key={pkg.label} className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: pkg.accent }}>{pkg.label}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: '#7b88c0' }}>Price (₱)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold" style={{ color: '#3a4570' }}>₱</span>
+                        <input type="number" min="1" step="1" value={pkg.price} onChange={e => pkg.setPrice(Number(e.target.value))}
+                          style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: `1px solid ${pkg.accent}30`, color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px 8px 24px', fontSize: 14, fontWeight: 700 }} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: '#7b88c0' }}>Tokens Given</label>
+                      <input type="number" min="1" step="1" value={pkg.tokens} onChange={e => pkg.setTokens(Number(e.target.value))}
+                        style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: `1px solid ${pkg.accent}30`, color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 14, fontWeight: 700 }} />
+                    </div>
                   </div>
-                  <input type="number" value={pkg.tokens} onChange={e => updatePkg(i, 'tokens', Number(e.target.value))} placeholder="Tokens"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 13 }} />
-                  <label className="flex items-center gap-1.5 cursor-pointer text-[11px]" style={{ color: pkg.highlight ? '#FFB400' : '#3a4570', whiteSpace: 'nowrap' }}>
-                    <input type="checkbox" checked={pkg.highlight} onChange={e => updatePkg(i, 'highlight', e.target.checked)} />
-                    Best
-                  </label>
-                  <button onClick={() => removePkg(i)} className="px-2 py-1 rounded text-xs" style={{ background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', color: '#FF6B6B', cursor: 'pointer' }}>✕</button>
                 </div>
               ))}
-            </div>
-            <button onClick={addPkg} className="px-4 py-2 rounded-lg text-xs font-bold mb-1" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)', color: '#00BFFF', cursor: 'pointer' }}>+ Add Package</button>
-          </div>
-
-          <div className="p-5 rounded-2xl mb-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p className="text-sm font-bold mb-3 uppercase tracking-widest" style={{ color: '#c8d0f0' }}>Custom Amount Rate</p>
-            <p className="text-xs mb-3" style={{ color: '#7b88c0' }}>How many tokens per ₱1 for custom amount top-ups. Default: 1 token per ₱1.</p>
-            <div className="flex items-center gap-3">
-              <span className="text-sm" style={{ color: '#7b88c0' }}>₱1 =</span>
-              <input type="number" min="0.01" step="0.01" value={customRate} onChange={e => setCustomRate(Number(e.target.value))}
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13, width: 100 }} />
-              <span className="text-sm" style={{ color: '#7b88c0' }}>tokens</span>
             </div>
           </div>
 
