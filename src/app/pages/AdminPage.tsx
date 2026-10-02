@@ -13,6 +13,7 @@ import AdminSettingsPanel from './admin/AdminSettingsPanel';
 import MembersPanel from './admin/MembersPanel';
 import EmailCenterPanel from './admin/EmailCenterPanel';
 import TokenEconomyPanel from './admin/TokenEconomyPanel';
+import AnalyticsPanel from './admin/AnalyticsPanel';
 import { isVaultUnlocked } from '@/lib/vault';
 
 /* ─────────────────────────────────────────────────────── types */
@@ -60,10 +61,10 @@ const ADMIN_CSS = `
     transition: all 0.15s;
   }
   .a-stock-plus:hover:not(:disabled) { background: rgba(0,191,255,0.16); }
-  .nav-item { display:flex; align-items:center; gap:9px; padding:7px 12px; border-radius:7px; margin:1px 8px; font-size:13px; font-weight:500; color:#4a5580; cursor:pointer; transition:all 0.15s; background:transparent; border:none; text-align:left; width:calc(100% - 16px); }
-  .nav-item:hover { background:rgba(255,255,255,0.04); color:#9ba8c8; }
-  .nav-item.active { background:rgba(0,191,255,0.1); color:#e8eaf6; }
-  .nav-section-label { font-size:9px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:#2e3a5a; padding:12px 22px 4px; }
+  .nav-item { display:flex; align-items:center; gap:9px; padding:8px 13px; border-radius:9px; margin:1px 8px; font-size:12.5px; font-weight:500; color:#4a5580; cursor:pointer; transition:all 0.18s; background:transparent; border:1px solid transparent; text-align:left; width:calc(100% - 16px); }
+  .nav-item:hover { background:rgba(255,255,255,0.04); color:#9ba8c8; border-color:rgba(255,255,255,0.05); }
+  .nav-item.active { background:linear-gradient(135deg,rgba(0,191,255,0.13) 0%,rgba(0,191,255,0.06) 100%); color:#e8eaf6; border-color:rgba(0,191,255,0.2); box-shadow:0 0 12px rgba(0,191,255,0.06); }
+  .nav-section-label { font-size:9px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:#2a3450; padding:14px 22px 5px; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 `;
 
@@ -97,9 +98,9 @@ function NavItem({ icon, label, active, onClick, badge }: { icon: React.ReactNod
   );
 }
 
-type Tab = 'dashboard' | 'products' | 'orders' | 'announcements' | 'codes' | 'accounts' | 'settings' | 'members' | 'emails' | 'tokens';
-const TAB_TITLES: Record<Tab, string> = { dashboard: 'Dashboard', orders: 'Orders', products: 'All Products', announcements: 'Announcements', codes: 'Code Inventory', accounts: 'Account Inventory', members: 'Members', emails: 'Email Center', settings: 'Settings', tokens: 'Token Economy' };
-const TAB_SUBTITLES: Record<Tab, string> = { dashboard: 'Overview of your store performance.', orders: 'Track and manage customer orders.', products: 'Manage your product catalog and stock.', announcements: 'Post and manage store announcements.', codes: 'Manage digital code inventory (vault-protected).', accounts: 'Manage account credentials inventory (vault-protected).', members: 'Manage VIP and Reseller memberships.', emails: 'Monitor email delivery logs.', settings: 'Configure store and admin settings.', tokens: 'Manage VIP & Reseller tokens, rewards, and leaderboards.' };
+type Tab = 'dashboard' | 'analytics' | 'products' | 'orders' | 'announcements' | 'codes' | 'accounts' | 'settings' | 'members' | 'emails' | 'tokens';
+const TAB_TITLES: Record<Tab, string> = { dashboard: 'Dashboard', analytics: 'Analytics', orders: 'Orders', products: 'All Products', announcements: 'Announcements', codes: 'Code Inventory', accounts: 'Account Inventory', members: 'Members', emails: 'Email Center', settings: 'Settings', tokens: 'Token Economy' };
+const TAB_SUBTITLES: Record<Tab, string> = { dashboard: 'Overview of your store performance.', analytics: 'Revenue, orders, and membership trends.', orders: 'Track and manage customer orders.', products: 'Manage your product catalog and stock.', announcements: 'Post and manage store announcements.', codes: 'Manage digital code inventory (vault-protected).', accounts: 'Manage account credentials inventory (vault-protected).', members: 'Manage VIP and Reseller memberships.', emails: 'Monitor email delivery logs.', settings: 'Configure store and admin settings.', tokens: 'Manage VIP & Reseller tokens, rewards, and leaderboards.' };
 
 /* ─────────────────────────────────────────────────────── helpers */
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
@@ -702,9 +703,9 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
 
   const TAB_ACCESS: Record<string, Tab[]> = {
-    owner:         ['dashboard','products','orders','announcements','codes','accounts','members','emails','tokens','settings'],
-    administrator: ['dashboard','products','orders','announcements','codes','accounts','members','emails','tokens','settings'],
-    moderator:     ['dashboard','products','orders','announcements'],
+    owner:         ['dashboard','analytics','products','orders','announcements','codes','accounts','members','emails','tokens','settings'],
+    administrator: ['dashboard','analytics','products','orders','announcements','codes','accounts','members','emails','tokens','settings'],
+    moderator:     ['dashboard','analytics','products','orders','announcements'],
   };
   const allowedTabs = TAB_ACCESS[adminRole] ?? TAB_ACCESS.administrator;
 
@@ -911,15 +912,15 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
 
   const SidebarContent = () => (
-    <div style={{ width: 240, height: '100%', background: '#111115', borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 9, background: 'linear-gradient(135deg,#00BFFF,#8A2BE2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+    <div style={{ width: 240, height: '100%', background: 'linear-gradient(180deg,#0d0f1a 0%,#0a0c18 100%)', borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#00BFFF 0%,#8A2BE2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 14px rgba(0,191,255,0.25)' }}>
             <IcGrid />
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: "\'Rajdhani\',\'Inter\',sans-serif", letterSpacing: '0.08em' }}>SALE SHOP</div>
-            <div style={{ fontSize: 9, color: '#3a4570', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Admin Panel</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.1em' }}>SALE SHOP</div>
+            <div style={{ fontSize: 9, color: '#3a4570', letterSpacing: '0.18em', textTransform: 'uppercase', marginTop: 1 }}>Control Panel</div>
           </div>
         </div>
       </div>
@@ -930,6 +931,9 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
         </NavSection>
         <NavSection label="Home">
           <NavItem icon={<IcGrid />} label="Dashboard" active={tab === 'dashboard'} onClick={() => switchTab('dashboard')} />
+          {allowedTabs.includes('analytics') && (
+            <NavItem icon={<SvgIc><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></SvgIc>} label="Analytics" active={tab === 'analytics'} onClick={() => switchTab('analytics')} />
+          )}
         </NavSection>
         {allowedTabs.some(t => ['announcements','members','emails','tokens'].includes(t)) && (
           <NavSection label="Manage">
@@ -1397,6 +1401,13 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
         {tab === 'announcements' && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
             <AnnouncementsPanel adminEmail={user.email} />
+          </motion.div>
+        )}
+
+        {tab === 'analytics' && (
+          <motion.div className="rounded-2xl p-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
+            style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <AnalyticsPanel />
           </motion.div>
         )}
 

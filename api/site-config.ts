@@ -11,6 +11,9 @@ const DEFAULTS: Record<string, unknown> = {
   ],
   topup_custom_rate: 1,
   bg_music_url: '',
+  music_name: '',
+  music_artist: '',
+  music_youtube_url: '',
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

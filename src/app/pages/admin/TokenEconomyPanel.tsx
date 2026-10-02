@@ -41,6 +41,9 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
   const [topupPackages, setTopupPackages] = useState<{ id: string; label: string; tokens: number; price: number; highlight: boolean }[]>([]);
   const [customRate, setCustomRate] = useState(1);
   const [bgMusicUrl, setBgMusicUrl] = useState('');
+  const [musicName, setMusicName] = useState('');
+  const [musicArtist, setMusicArtist] = useState('');
+  const [musicYoutubeUrl, setMusicYoutubeUrl] = useState('');
   const [pricingSaving, setPricingSaving] = useState(false);
   const [pricingMsg, setPricingMsg] = useState('');
 
@@ -95,14 +98,15 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
 
   async function loadPricing() {
     try {
-      const [pkgsR, rateR, musicR] = await Promise.all([
-        fetch('/api/site-config?key=topup_packages'),
-        fetch('/api/site-config?key=topup_custom_rate'),
-        fetch('/api/site-config?key=bg_music_url'),
-      ]);
-      if (pkgsR.ok) { const d = await pkgsR.json(); if (Array.isArray(d)) setTopupPackages(d); }
-      if (rateR.ok) { const d = await rateR.json(); if (typeof d === 'number') setCustomRate(d); }
-      if (musicR.ok) { const d = await musicR.json(); if (typeof d === 'string') setBgMusicUrl(d); }
+      const keys = ['topup_packages', 'topup_custom_rate', 'bg_music_url', 'music_name', 'music_artist', 'music_youtube_url'];
+      const results = await Promise.all(keys.map(k => fetch(`/api/site-config?key=${k}`).then(r => r.ok ? r.json() : null)));
+      const [pkgs, rate, musicUrl, name, artist, ytUrl] = results;
+      if (Array.isArray(pkgs)) setTopupPackages(pkgs);
+      if (typeof rate === 'number') setCustomRate(rate);
+      if (typeof musicUrl === 'string') setBgMusicUrl(musicUrl);
+      if (typeof name === 'string') setMusicName(name);
+      if (typeof artist === 'string') setMusicArtist(artist);
+      if (typeof ytUrl === 'string') setMusicYoutubeUrl(ytUrl);
     } catch { /* ignore */ }
   }
 
@@ -110,13 +114,20 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
     setPricingSaving(true); setPricingMsg('');
     try {
       const headers = { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() };
-      const [r1, r2, r3] = await Promise.all([
-        fetch('/api/admin?action=set-config', { method: 'POST', headers, body: JSON.stringify({ key: 'topup_packages', value: topupPackages }) }),
-        fetch('/api/admin?action=set-config', { method: 'POST', headers, body: JSON.stringify({ key: 'topup_custom_rate', value: customRate }) }),
-        fetch('/api/admin?action=set-config', { method: 'POST', headers, body: JSON.stringify({ key: 'bg_music_url', value: bgMusicUrl }) }),
-      ]);
-      if (!r1.ok || !r2.ok || !r3.ok) {
-        const errBody = !r3.ok ? await r3.json().catch(() => ({})) : !r1.ok ? await r1.json().catch(() => ({})) : await r2.json().catch(() => ({}));
+      const saves = [
+        { key: 'topup_packages', value: topupPackages },
+        { key: 'topup_custom_rate', value: customRate },
+        { key: 'bg_music_url', value: bgMusicUrl },
+        { key: 'music_name', value: musicName },
+        { key: 'music_artist', value: musicArtist },
+        { key: 'music_youtube_url', value: musicYoutubeUrl },
+      ];
+      const responses = await Promise.all(saves.map(s =>
+        fetch('/api/admin?action=set-config', { method: 'POST', headers, body: JSON.stringify(s) })
+      ));
+      if (responses.some(r => !r.ok)) {
+        const failed = responses.find(r => !r.ok)!;
+        const errBody = await failed.json().catch(() => ({}));
         const msg = (errBody as any)?.error ?? 'Save failed';
         setPricingMsg(`✕ ${msg} — make sure the site_config table exists in Supabase`);
       } else {
@@ -483,19 +494,49 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
 
           <div className="p-5 rounded-2xl mb-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(138,43,226,0.2)' }}>
             <p className="text-sm font-bold mb-1 uppercase tracking-widest" style={{ color: '#c8d0f0' }}>♪ Background Music</p>
-            <p className="text-xs mb-3" style={{ color: '#7b88c0' }}>Paste a GitHub file URL (e.g. <code style={{ color: '#B06EFF' }}>https://github.com/user/repo/blob/main/song.mp3</code>). Shown as a floating player on the VIP/Reseller dashboard. Leave blank to disable.</p>
-            <input
-              type="url"
-              value={bgMusicUrl}
-              onChange={e => setBgMusicUrl(e.target.value)}
-              placeholder="https://github.com/user/repo/blob/main/music.mp3"
-              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(138,43,226,0.25)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
-            />
-            {bgMusicUrl && (
-              <p className="mt-1.5 text-[10px]" style={{ color: '#B06EFF' }}>
-                Raw URL: {bgMusicUrl.replace(/^https?:\/\/github\.com\/([^/]+\/[^/]+)\/blob\/(.+)$/, 'https://raw.githubusercontent.com/$1/$2')}
-              </p>
-            )}
+            <p className="text-xs mb-4" style={{ color: '#7b88c0' }}>Paste a YouTube video URL — it will auto-play (muted by default) when members enter their dashboard. Optionally add a name and artist for display.</p>
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: '#7b88c0' }}>YouTube URL</label>
+                <input
+                  type="url"
+                  value={musicYoutubeUrl}
+                  onChange={e => setMusicYoutubeUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(138,43,226,0.25)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: '#7b88c0' }}>Song Name</label>
+                  <input
+                    type="text"
+                    value={musicName}
+                    onChange={e => setMusicName(e.target.value)}
+                    placeholder="e.g. Never Gonna Give You Up"
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: '#7b88c0' }}>Artist</label>
+                  <input
+                    type="text"
+                    value={musicArtist}
+                    onChange={e => setMusicArtist(e.target.value)}
+                    placeholder="e.g. Rick Astley"
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+                  />
+                </div>
+              </div>
+              <p className="text-[10px]" style={{ color: '#4a5580' }}>Legacy direct audio URL (GitHub raw link) still works as fallback if YouTube URL is empty.</p>
+              <input
+                type="url"
+                value={bgMusicUrl}
+                onChange={e => setBgMusicUrl(e.target.value)}
+                placeholder="https://raw.githubusercontent.com/... (fallback audio URL)"
+                style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 12 }}
+              />
+            </div>
           </div>
 
           {pricingMsg && <p className="mb-3 text-xs px-3 py-2 rounded-lg" style={{ background: pricingMsg.startsWith('✓') ? 'rgba(0,230,118,0.08)' : 'rgba(255,68,68,0.08)', color: pricingMsg.startsWith('✓') ? '#00E676' : '#FF6B6B' }}>{pricingMsg}</p>}

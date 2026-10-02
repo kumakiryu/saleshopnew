@@ -26,13 +26,16 @@ export default function MemberDashboardPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingTx, setLoadingTx] = useState(true);
 
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [musicUrl, setMusicUrl] = useState('');
+  const ytPlayerRef = useRef<HTMLIFrameElement>(null);
+  const [musicYoutubeUrl, setMusicYoutubeUrl] = useState('');
+  const [musicFallbackUrl, setMusicFallbackUrl] = useState('');
+  const [musicName, setMusicName] = useState('');
+  const [musicArtist, setMusicArtist] = useState('');
   const [musicLoaded, setMusicLoaded] = useState(false);
-  const [musicPlaying, setMusicPlaying] = useState(false);
-  const [musicVolume, setMusicVolume] = useState(0.3);
+  const [musicMuted, setMusicMuted] = useState(true);
   const [musicVisible, setMusicVisible] = useState(true);
-  const [musicError, setMusicError] = useState(false);
+  const [musicMinimized, setMusicMinimized] = useState(false);
+
   useEffect(() => {
     if (!user) { navigate(basePath); return; }
     const tier = user.tier;
@@ -40,43 +43,45 @@ export default function MemberDashboardPage() {
     refreshTokens();
     loadTransactions();
     loadOrders();
+    fetchMusicConfig();
   }, [user]);
 
-  function fetchMusicUrl() {
-    setMusicLoaded(false);
-    setMusicError(false);
-    setMusicPlaying(false);
+  function fetchMusicConfig() {
     const session = (() => { try { const r = localStorage.getItem('cs_session'); return r ? JSON.parse(r) : null; } catch { return null; } })();
     if (!session?.access_token) { setMusicLoaded(true); return; }
     fetch(`/api/get-tokens?_t=${Date.now()}`, { cache: 'no-store', headers: { Authorization: `Bearer ${session.access_token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
-        const raw = typeof d?.bg_music_url === 'string' ? toRawGithubUrl(d.bg_music_url.trim()) : '';
-        setMusicUrl(raw);
+        if (!d) { setMusicLoaded(true); return; }
+        setMusicYoutubeUrl(d.music_youtube_url ?? '');
+        setMusicFallbackUrl(typeof d.bg_music_url === 'string' ? toRawGithubUrl(d.bg_music_url.trim()) : '');
+        setMusicName(d.music_name ?? '');
+        setMusicArtist(d.music_artist ?? '');
         setMusicLoaded(true);
       })
       .catch(() => setMusicLoaded(true));
   }
 
-  useEffect(() => { fetchMusicUrl(); }, []);
-
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = musicVolume;
-  }, [musicVolume]);
-
-  function toggleMusic() {
-    const el = audioRef.current;
-    if (!el || !musicUrl) return;
-    setMusicError(false);
-    if (musicPlaying) {
-      el.pause();
-      setMusicPlaying(false);
-    } else {
-      el.play()
-        .then(() => setMusicPlaying(true))
-        .catch(() => { setMusicError(true); setMusicPlaying(false); });
-    }
+  function extractYouTubeId(url: string): string {
+    const m = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : '';
   }
+
+  function sendYtCommand(cmd: object) {
+    ytPlayerRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', ...cmd }), '*');
+  }
+
+  function toggleMute() {
+    if (musicMuted) {
+      sendYtCommand({ func: 'unMute', args: [] });
+    } else {
+      sendYtCommand({ func: 'mute', args: [] });
+    }
+    setMusicMuted(m => !m);
+  }
+
+  const ytVideoId = extractYouTubeId(musicYoutubeUrl);
+  const hasMusic = !!ytVideoId || !!musicFallbackUrl;
 
   async function loadTransactions() {
     try {
@@ -108,14 +113,16 @@ export default function MemberDashboardPage() {
 
   return (
     <div className="min-h-screen" style={{ background: '#050816', fontFamily: "'Inter', sans-serif" }}>
-      <audio
-        ref={audioRef}
-        src={musicUrl || undefined}
-        loop
-        preload="auto"
-        onCanPlay={() => { setMusicLoaded(true); setMusicError(false); }}
-        onError={() => { setMusicError(true); setMusicPlaying(false); }}
-      />
+      {/* Hidden YouTube iframe auto-plays muted on mount */}
+      {ytVideoId && (
+        <iframe
+          ref={ytPlayerRef}
+          src={`https://www.youtube.com/embed/${ytVideoId}?autoplay=1&mute=1&loop=1&playlist=${ytVideoId}&controls=0&enablejsapi=1`}
+          allow="autoplay; encrypted-media"
+          style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
+          title="bg-music"
+        />
+      )}
       <style>{`
         @keyframes token-spin {
           from { transform: rotateY(0deg); }
@@ -284,52 +291,55 @@ export default function MemberDashboardPage() {
       </div>
 
       {/* Floating music player */}
-      {musicLoaded && musicVisible && (
-        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-3 py-2 rounded-2xl shadow-2xl"
-          style={{ background: 'rgba(0,0,0,0.92)', border: `1px solid ${accent}30`, backdropFilter: 'blur(12px)', minWidth: 190 }}>
-          <button
-            onClick={toggleMusic}
-            disabled={!musicUrl || musicError}
-            className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-            style={{ background: `${accent}18`, border: `1px solid ${accent}40`, cursor: (!musicUrl || musicError) ? 'not-allowed' : 'pointer', color: (!musicUrl || musicError) ? '#555' : accent, opacity: (!musicUrl || musicError) ? 0.5 : 1 }}>
-            {musicPlaying ? (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-            ) : (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-            )}
-          </button>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1 mb-1">
-              <p className="text-[9px] uppercase tracking-widest flex-1" style={{ color: musicError ? '#f87171' : accent }}>
-                {musicError ? '✕ Load error' : musicPlaying ? '♪ Playing' : musicUrl ? 'Background Music' : 'No music set'}
-              </p>
-              <button onClick={fetchMusicUrl} title="Reload music URL" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', fontSize: 10, padding: 0 }}>↺</button>
+      {musicLoaded && hasMusic && !musicMinimized && (
+        <div className="fixed bottom-5 right-5 z-50 rounded-2xl shadow-2xl overflow-hidden"
+          style={{ background: 'rgba(8,10,24,0.97)', border: `1px solid ${accent}28`, backdropFilter: 'blur(20px)', width: 220 }}>
+          {/* Header bar */}
+          <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
+            <div className="flex items-center gap-1.5">
+              <span style={{ color: accent, fontSize: 11 }}>♪</span>
+              <span className="text-[9px] uppercase tracking-[0.2em] font-bold" style={{ color: accent }}>Now Playing</span>
             </div>
-            {musicUrl && !musicError ? (
-              <input
-                type="range" min="0" max="1" step="0.05"
-                value={musicVolume}
-                onChange={e => {
-                  const v = Number(e.target.value);
-                  setMusicVolume(v);
-                  if (audioRef.current) audioRef.current.volume = v;
-                }}
-                style={{ width: '100%', accentColor: accent, cursor: 'pointer', height: 3 }}
-              />
-            ) : (
-              <p className="text-[8px]" style={{ color: '#555' }}>{musicError ? 'Check URL in admin' : 'Configure in admin panel'}</p>
-            )}
+            <div className="flex items-center gap-1">
+              <button onClick={() => setMusicMinimized(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3a4570', fontSize: 11, padding: '0 2px', lineHeight: 1 }}>−</button>
+              <button onClick={() => { setMusicVisible(false); setMusicMinimized(true); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3a4570', fontSize: 11, padding: '0 2px', lineHeight: 1 }}>✕</button>
+            </div>
           </div>
-          <button onClick={() => setMusicVisible(false)} className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3a4570', fontSize: 12 }}>
-            ✕
-          </button>
+          {/* Track info */}
+          <div className="px-3 pb-2">
+            <p className="text-xs font-semibold truncate" style={{ color: '#e8eaf6' }}>{musicName || 'Background Music'}</p>
+            {musicArtist && <p className="text-[10px] truncate" style={{ color: '#7b88c0' }}>{musicArtist}</p>}
+          </div>
+          {/* Animated equaliser bars */}
+          <div className="flex items-end gap-[3px] px-3 pb-2 h-6">
+            {[0.4, 0.7, 1, 0.6, 0.9, 0.5, 0.8].map((h, i) => (
+              <div key={i} style={{ width: 3, borderRadius: 2, background: accent, opacity: musicMuted ? 0.3 : 0.8,
+                height: `${h * 20}px`, animation: musicMuted ? 'none' : `eq-bar ${0.5 + i * 0.07}s ease-in-out infinite alternate` }} />
+            ))}
+            <style>{`@keyframes eq-bar { from { transform: scaleY(0.3); } to { transform: scaleY(1); } }`}</style>
+          </div>
+          {/* Controls */}
+          <div className="flex items-center gap-2 px-3 pb-3">
+            <button onClick={toggleMute}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold flex-1"
+              style={{ background: musicMuted ? 'rgba(255,255,255,0.06)' : `${accent}18`, border: `1px solid ${musicMuted ? 'rgba(255,255,255,0.1)' : accent + '40'}`, color: musicMuted ? '#7b88c0' : accent, cursor: 'pointer' }}>
+              {musicMuted ? (
+                <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Unmute</>
+              ) : (
+                <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg> Mute</>
+              )}
+            </button>
+            <button onClick={fetchMusicConfig} title="Reload" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3a4570', fontSize: 12, padding: '4px' }}>↺</button>
+          </div>
         </div>
       )}
-      {musicLoaded && !musicVisible && (
-        <button onClick={() => setMusicVisible(true)} className="fixed bottom-5 right-5 z-50 w-10 h-10 rounded-full flex items-center justify-center shadow-2xl"
-          style={{ background: 'rgba(0,0,0,0.9)', border: `1px solid ${accent}35`, cursor: 'pointer', color: accent }}>
-          ♪
+      {/* Minimized pill */}
+      {musicLoaded && hasMusic && musicMinimized && (
+        <button onClick={() => setMusicMinimized(false)}
+          className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-3 py-2 rounded-full shadow-2xl"
+          style={{ background: 'rgba(8,10,24,0.97)', border: `1px solid ${accent}35`, cursor: 'pointer', color: accent }}>
+          <span style={{ fontSize: 13 }}>♪</span>
+          {musicName && <span className="text-[10px] font-semibold max-w-[100px] truncate" style={{ color: '#c8d0f0' }}>{musicName}</span>}
         </button>
       )}
     </div>
