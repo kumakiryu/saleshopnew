@@ -51,6 +51,7 @@ async function fetchTokenBalance(accessToken: string): Promise<TokenBalance | nu
       resellerTokens: d.reseller_tokens ?? 0,
       lifetimeEarned: d.lifetime_earned ?? 0,
       lifetimeSpent: d.lifetime_spent ?? 0,
+      bgMusicUrl: d.bg_music_url ?? '',
     };
   } catch { return null; }
 }

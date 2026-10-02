@@ -40,6 +40,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
 
   const [topupPackages, setTopupPackages] = useState<{ id: string; label: string; tokens: number; price: number; highlight: boolean }[]>([]);
   const [customRate, setCustomRate] = useState(1);
+  const [bgMusicUrl, setBgMusicUrl] = useState('');
   const [pricingSaving, setPricingSaving] = useState(false);
   const [pricingMsg, setPricingMsg] = useState('');
 
@@ -94,24 +95,38 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
 
   async function loadPricing() {
     try {
-      const [pkgsR, rateR] = await Promise.all([
+      const [pkgsR, rateR, musicR] = await Promise.all([
         fetch('/api/site-config?key=topup_packages'),
         fetch('/api/site-config?key=topup_custom_rate'),
+        fetch('/api/site-config?key=bg_music_url'),
       ]);
       if (pkgsR.ok) { const d = await pkgsR.json(); if (Array.isArray(d)) setTopupPackages(d); }
       if (rateR.ok) { const d = await rateR.json(); if (typeof d === 'number') setCustomRate(d); }
+      if (musicR.ok) { const d = await musicR.json(); if (typeof d === 'string') setBgMusicUrl(d); }
     } catch { /* ignore */ }
   }
 
   async function savePricing() {
     setPricingSaving(true); setPricingMsg('');
     try {
-      await Promise.all([
-        fetch('/api/admin?action=set-config', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() }, body: JSON.stringify({ key: 'topup_packages', value: topupPackages }) }),
-        fetch('/api/admin?action=set-config', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() }, body: JSON.stringify({ key: 'topup_custom_rate', value: customRate }) }),
+      const headers = { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() };
+      const [r1, r2, r3] = await Promise.all([
+        fetch('/api/admin?action=set-config', { method: 'POST', headers, body: JSON.stringify({ key: 'topup_packages', value: topupPackages }) }),
+        fetch('/api/admin?action=set-config', { method: 'POST', headers, body: JSON.stringify({ key: 'topup_custom_rate', value: customRate }) }),
+        fetch('/api/admin?action=set-config', { method: 'POST', headers, body: JSON.stringify({ key: 'bg_music_url', value: bgMusicUrl }) }),
       ]);
-      setPricingMsg('✓ Pricing saved');
-    } catch { setPricingMsg('Error saving'); } finally { setPricingSaving(false); }
+      if (!r1.ok || !r2.ok || !r3.ok) {
+        const errBody = !r3.ok ? await r3.json().catch(() => ({})) : !r1.ok ? await r1.json().catch(() => ({})) : await r2.json().catch(() => ({}));
+        const msg = (errBody as any)?.error ?? 'Save failed';
+        setPricingMsg(`✕ ${msg} — make sure the site_config table exists in Supabase`);
+      } else {
+        setPricingMsg('✓ Settings saved');
+      }
+    } catch (e: any) {
+      setPricingMsg(`✕ Error: ${e?.message ?? 'Network error'}`);
+    } finally {
+      setPricingSaving(false);
+    }
   }
 
   function updatePkg(idx: number, field: string, val: string | number | boolean) {
@@ -466,11 +481,28 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
             </div>
           </div>
 
+          <div className="p-5 rounded-2xl mb-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(138,43,226,0.2)' }}>
+            <p className="text-sm font-bold mb-1 uppercase tracking-widest" style={{ color: '#c8d0f0' }}>♪ Background Music</p>
+            <p className="text-xs mb-3" style={{ color: '#7b88c0' }}>Paste a GitHub file URL (e.g. <code style={{ color: '#B06EFF' }}>https://github.com/user/repo/blob/main/song.mp3</code>). Shown as a floating player on the VIP/Reseller dashboard. Leave blank to disable.</p>
+            <input
+              type="url"
+              value={bgMusicUrl}
+              onChange={e => setBgMusicUrl(e.target.value)}
+              placeholder="https://github.com/user/repo/blob/main/music.mp3"
+              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(138,43,226,0.25)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+            />
+            {bgMusicUrl && (
+              <p className="mt-1.5 text-[10px]" style={{ color: '#B06EFF' }}>
+                Raw URL: {bgMusicUrl.replace(/^https?:\/\/github\.com\/([^/]+\/[^/]+)\/blob\/(.+)$/, 'https://raw.githubusercontent.com/$1/$2')}
+              </p>
+            )}
+          </div>
+
           {pricingMsg && <p className="mb-3 text-xs px-3 py-2 rounded-lg" style={{ background: pricingMsg.startsWith('✓') ? 'rgba(0,230,118,0.08)' : 'rgba(255,68,68,0.08)', color: pricingMsg.startsWith('✓') ? '#00E676' : '#FF6B6B' }}>{pricingMsg}</p>}
           <button onClick={savePricing} disabled={pricingSaving} className="px-6 py-3 rounded-xl text-sm font-bold" style={{ background: 'rgba(255,180,0,0.12)', border: '1px solid rgba(255,180,0,0.3)', color: '#FFB400', cursor: 'pointer' }}>
-            {pricingSaving ? 'Saving...' : 'Save Pricing'}
+            {pricingSaving ? 'Saving...' : 'Save All Settings'}
           </button>
-          <p className="mt-3 text-[11px]" style={{ color: '#3a4570' }}>Changes apply immediately. Requires the <code style={{ color: '#00BFFF' }}>site_config</code> table — see SQL below.</p>
+          <p className="mt-3 text-[11px]" style={{ color: '#3a4570' }}>Requires the <code style={{ color: '#00BFFF' }}>site_config</code> table in Supabase to persist changes.</p>
         </div>
       )}
 

@@ -1,8 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { useCustomerAuth } from '@/lib/customerAuth';
 import MemberDropdown from './MemberDropdown';
 import TokenIcon from '@/app/components/TokenIcon';
+
+function toRawGithubUrl(url: string): string {
+  if (!url) return url;
+  // Convert github.com/user/repo/blob/branch/file → raw.githubusercontent.com/user/repo/branch/file
+  return url.replace(/^https?:\/\/github\.com\/([^/]+\/[^/]+)\/blob\/(.+)$/, 'https://raw.githubusercontent.com/$1/$2');
+}
 
 const GOLD = '#FFB400';
 const GREEN = '#00E676';
@@ -19,6 +25,14 @@ export default function MemberDashboardPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingTx, setLoadingTx] = useState(true);
+
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [musicUrl, setMusicUrl] = useState('');
+  const [musicLoaded, setMusicLoaded] = useState(false);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(0.3);
+  const [musicVisible, setMusicVisible] = useState(true);
+  const [musicError, setMusicError] = useState(false);
   useEffect(() => {
     if (!user) { navigate(basePath); return; }
     const tier = user.tier;
@@ -27,6 +41,42 @@ export default function MemberDashboardPage() {
     loadTransactions();
     loadOrders();
   }, [user]);
+
+  function fetchMusicUrl() {
+    setMusicLoaded(false);
+    setMusicError(false);
+    setMusicPlaying(false);
+    const session = (() => { try { const r = localStorage.getItem('cs_session'); return r ? JSON.parse(r) : null; } catch { return null; } })();
+    if (!session?.access_token) { setMusicLoaded(true); return; }
+    fetch(`/api/get-tokens?_t=${Date.now()}`, { cache: 'no-store', headers: { Authorization: `Bearer ${session.access_token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        const raw = typeof d?.bg_music_url === 'string' ? toRawGithubUrl(d.bg_music_url.trim()) : '';
+        setMusicUrl(raw);
+        setMusicLoaded(true);
+      })
+      .catch(() => setMusicLoaded(true));
+  }
+
+  useEffect(() => { fetchMusicUrl(); }, []);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = musicVolume;
+  }, [musicVolume]);
+
+  function toggleMusic() {
+    const el = audioRef.current;
+    if (!el || !musicUrl) return;
+    setMusicError(false);
+    if (musicPlaying) {
+      el.pause();
+      setMusicPlaying(false);
+    } else {
+      el.play()
+        .then(() => setMusicPlaying(true))
+        .catch(() => { setMusicError(true); setMusicPlaying(false); });
+    }
+  }
 
   async function loadTransactions() {
     try {
@@ -58,6 +108,14 @@ export default function MemberDashboardPage() {
 
   return (
     <div className="min-h-screen" style={{ background: '#050816', fontFamily: "'Inter', sans-serif" }}>
+      <audio
+        ref={audioRef}
+        src={musicUrl || undefined}
+        loop
+        preload="auto"
+        onCanPlay={() => { setMusicLoaded(true); setMusicError(false); }}
+        onError={() => { setMusicError(true); setMusicPlaying(false); }}
+      />
       <style>{`
         @keyframes token-spin {
           from { transform: rotateY(0deg); }
@@ -224,6 +282,56 @@ export default function MemberDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Floating music player */}
+      {musicLoaded && musicVisible && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-3 py-2 rounded-2xl shadow-2xl"
+          style={{ background: 'rgba(0,0,0,0.92)', border: `1px solid ${accent}30`, backdropFilter: 'blur(12px)', minWidth: 190 }}>
+          <button
+            onClick={toggleMusic}
+            disabled={!musicUrl || musicError}
+            className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: `${accent}18`, border: `1px solid ${accent}40`, cursor: (!musicUrl || musicError) ? 'not-allowed' : 'pointer', color: (!musicUrl || musicError) ? '#555' : accent, opacity: (!musicUrl || musicError) ? 0.5 : 1 }}>
+            {musicPlaying ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            )}
+          </button>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1 mb-1">
+              <p className="text-[9px] uppercase tracking-widest flex-1" style={{ color: musicError ? '#f87171' : accent }}>
+                {musicError ? '✕ Load error' : musicPlaying ? '♪ Playing' : musicUrl ? 'Background Music' : 'No music set'}
+              </p>
+              <button onClick={fetchMusicUrl} title="Reload music URL" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', fontSize: 10, padding: 0 }}>↺</button>
+            </div>
+            {musicUrl && !musicError ? (
+              <input
+                type="range" min="0" max="1" step="0.05"
+                value={musicVolume}
+                onChange={e => {
+                  const v = Number(e.target.value);
+                  setMusicVolume(v);
+                  if (audioRef.current) audioRef.current.volume = v;
+                }}
+                style={{ width: '100%', accentColor: accent, cursor: 'pointer', height: 3 }}
+              />
+            ) : (
+              <p className="text-[8px]" style={{ color: '#555' }}>{musicError ? 'Check URL in admin' : 'Configure in admin panel'}</p>
+            )}
+          </div>
+          <button onClick={() => setMusicVisible(false)} className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3a4570', fontSize: 12 }}>
+            ✕
+          </button>
+        </div>
+      )}
+      {musicLoaded && !musicVisible && (
+        <button onClick={() => setMusicVisible(true)} className="fixed bottom-5 right-5 z-50 w-10 h-10 rounded-full flex items-center justify-center shadow-2xl"
+          style={{ background: 'rgba(0,0,0,0.9)', border: `1px solid ${accent}35`, cursor: 'pointer', color: accent }}>
+          ♪
+        </button>
+      )}
     </div>
   );
 }

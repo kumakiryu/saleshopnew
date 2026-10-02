@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from './_types';
-import { fulfillOrder, verifyAdminToken } from './_shared';
+import { fulfillOrder, resendOrderEmail, verifyAdminToken } from './_shared';
 import crypto from 'node:crypto';
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'https://hxfccpadsbunynignbwn.supabase.co';
@@ -92,8 +92,8 @@ async function svcInsert(table: string, data: unknown): Promise<void> {
 }
 
 async function svcUpsert(table: string, data: unknown, onConflict: string): Promise<void> {
-  const h = { ...svcH(), Prefer: `return=representation,resolution=merge-duplicates,on_conflict=${onConflict}` };
-  await fetch(`${SUPABASE_URL}/rest/v1/${table}`, { method: 'POST', headers: h, body: JSON.stringify(data) });
+  const h = { ...svcH(), Prefer: 'return=representation,resolution=merge-duplicates' };
+  await fetch(`${SUPABASE_URL}/rest/v1/${table}?on_conflict=${onConflict}`, { method: 'POST', headers: h, body: JSON.stringify(data) });
 }
 
 async function svcDelete(table: string, filters: Record<string, unknown>): Promise<void> {
@@ -176,7 +176,7 @@ async function handleTokens(req: VercelRequest, res: VercelResponse) {
   }
   await fetch(`${SUPABASE_URL}/rest/v1/token_transactions`, {
     method: 'POST', headers: { ...headers, Prefer: 'return=minimal' },
-    body: JSON.stringify({ user_id: target_user_id, transaction_type: 'adjust', amount: action === 'remove' ? -Number(amount ?? 0) : newVal, reason: `Admin ${action} — by ${auth.userId}`, created_at: new Date().toISOString() }),
+    body: JSON.stringify({ user_id: target_user_id, transaction_type: 'adjust', amount: action === 'remove' ? -Number(amount ?? 0) : action === 'add' ? Number(amount ?? 0) : 0, reason: `Admin ${action} — by ${auth.userId}`, created_at: new Date().toISOString() }),
   });
   return res.status(200).json({ ok: true, new_balance: newVal });
 }
@@ -266,9 +266,9 @@ async function handleCreateMember(req: VercelRequest, res: VercelResponse) {
   const userId = createData?.id;
   if (!userId) return res.status(500).json({ error: 'User created but no ID returned' });
   if (tier !== 'normal') {
-    const upsertRes = await fetch(`${SUPABASE_URL}/rest/v1/user_memberships`, {
+    const upsertRes = await fetch(`${SUPABASE_URL}/rest/v1/user_memberships?on_conflict=user_id`, {
       method: 'POST',
-      headers: { ...svcH(), Prefer: 'return=representation,resolution=merge-duplicates,on_conflict=user_id' },
+      headers: { ...svcH(), Prefer: 'return=representation,resolution=merge-duplicates' },
       body: JSON.stringify({ user_id: userId, tier, assigned_by: adminId, assigned_at: new Date().toISOString() }),
     });
     if (!upsertRes.ok) {
@@ -320,9 +320,9 @@ async function handleManageMembership(req: VercelRequest, res: VercelResponse) {
   if (tier === 'normal') {
     await fetch(`${SUPABASE_URL}/rest/v1/user_memberships?user_id=eq.${userId}`, { method: 'DELETE', headers: svcH() });
   } else {
-    const upsertRes = await fetch(`${SUPABASE_URL}/rest/v1/user_memberships`, {
+    const upsertRes = await fetch(`${SUPABASE_URL}/rest/v1/user_memberships?on_conflict=user_id`, {
       method: 'POST',
-      headers: { ...svcH(), Prefer: 'return=representation,resolution=merge-duplicates,on_conflict=user_id' },
+      headers: { ...svcH(), Prefer: 'return=representation,resolution=merge-duplicates' },
       body: JSON.stringify({ user_id: userId, tier, assigned_by: adminId, assigned_at: new Date().toISOString() }),
     });
     if (!upsertRes.ok) {
@@ -348,6 +348,23 @@ async function handleRedemptionLogs(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json(r.ok ? await r.json() : []);
 }
 
+// ── Action: resend-email ──────────────────────────────────────────────────────
+
+async function handleResendEmail(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') return res.status(405).end();
+  const token = String(req.headers['x-admin-token'] ?? '');
+  const auth = await verifyAdminToken(token);
+  if (!auth.ok) return res.status(403).json({ error: 'Forbidden' });
+  const { order_id } = req.body ?? {};
+  if (!order_id) return res.status(400).json({ error: 'order_id required' });
+  try {
+    await resendOrderEmail(order_id);
+    return res.status(200).json({ ok: true });
+  } catch (e: any) {
+    return res.status(500).json({ error: e?.message ?? 'Failed to resend' });
+  }
+}
+
 // ── Action: set-config ────────────────────────────────────────────────────────
 
 async function handleSetConfig(req: VercelRequest, res: VercelResponse) {
@@ -357,9 +374,9 @@ async function handleSetConfig(req: VercelRequest, res: VercelResponse) {
   if (!auth.ok) return res.status(403).json({ error: 'Forbidden' });
   const { key, value } = req.body ?? {};
   if (!key || value === undefined) return res.status(400).json({ error: 'key and value required' });
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/site_config`, {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/site_config?on_conflict=key`, {
     method: 'POST',
-    headers: { ...svcH(), Prefer: 'return=minimal,resolution=merge-duplicates,on_conflict=key' },
+    headers: { ...svcH(), Prefer: 'return=minimal,resolution=merge-duplicates' },
     body: JSON.stringify({ key, value, updated_at: new Date().toISOString() }),
   });
   return res.status(r.ok ? 200 : 500).json(r.ok ? { ok: true } : { error: 'Failed to save' });
@@ -378,6 +395,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'list-members': return await handleListMembers(req, res);
       case 'manage-membership': return await handleManageMembership(req, res);
       case 'redemption-logs': return await handleRedemptionLogs(req, res);
+      case 'resend-email': return await handleResendEmail(req, res);
       case 'set-config': return await handleSetConfig(req, res);
       default: return res.status(400).json({ error: `Unknown action: ${action}` });
     }

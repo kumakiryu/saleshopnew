@@ -10,6 +10,7 @@ const DEFAULTS: Record<string, unknown> = {
     { id: 'elite', label: 'Elite', tokens: 500, price: 420, highlight: false },
   ],
   topup_custom_rate: 1,
+  bg_music_url: '',
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

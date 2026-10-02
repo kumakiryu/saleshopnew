@@ -37,10 +37,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     : [];
   const lifetime_spent = spendRows.reduce((s: number, r: { amount: number }) => s + (r.amount ?? 0), 0);
 
+  const cfgRes = await fetch(`${SUPABASE_URL}/rest/v1/site_config?key=eq.bg_music_url&select=value&limit=1`, { headers: svcHeaders });
+  const cfgRows: { value: unknown }[] = cfgRes.ok ? await cfgRes.json() : [];
+  const bg_music_url = typeof cfgRows?.[0]?.value === 'string' ? cfgRows[0].value : '';
+
   return res.status(200).json({
     vip_tokens: row.vip_tokens ?? 0,
     reseller_tokens: row.reseller_tokens ?? 0,
     lifetime_earned,
     lifetime_spent,
+    bg_music_url,
   });
 }

@@ -4,20 +4,26 @@ import { format } from 'date-fns';
 import type { EmailLog } from '@/lib/types';
 
 const STATUS_COLOR: Record<string, string> = {
-  sent:       '#00BFFF',
-  delivered:  '#00E676',
-  failed:     '#FF6B6B',
+  sent:      '#00BFFF',
+  delivered: '#00E676',
+  failed:    '#FF6B6B',
 };
 const STATUS_BG: Record<string, string> = {
-  sent:       'rgba(0,191,255,0.1)',
-  delivered:  'rgba(0,230,118,0.1)',
-  failed:     'rgba(255,68,68,0.1)',
+  sent:      'rgba(0,191,255,0.1)',
+  delivered: 'rgba(0,230,118,0.1)',
+  failed:    'rgba(255,68,68,0.1)',
 };
+
+function getAdminToken() {
+  try { const s = localStorage.getItem('sb_session'); return s ? JSON.parse(s).access_token : ''; } catch { return ''; }
+}
 
 export default function EmailCenterPanel() {
   const [logs, setLogs]       = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter]   = useState<'all' | 'sent' | 'delivered' | 'failed'>('all');
+  const [resending, setResending] = useState<string | null>(null);
+  const [resendMsg, setResendMsg] = useState<{ id: string; ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     load();
@@ -33,6 +39,23 @@ export default function EmailCenterPanel() {
       .limit(200);
     if (data) setLogs(data as EmailLog[]);
     setLoading(false);
+  }
+
+  async function resend(orderId: string, logId: string) {
+    setResending(logId);
+    setResendMsg(null);
+    try {
+      const r = await fetch('/api/admin?action=resend-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
+        body: JSON.stringify({ order_id: orderId }),
+      });
+      const d = await r.json();
+      setResendMsg({ id: logId, ok: r.ok, text: r.ok ? '✓ Resent' : d.error ?? 'Failed' });
+      if (r.ok) setTimeout(load, 1500);
+    } catch {
+      setResendMsg({ id: logId, ok: false, text: 'Request failed' });
+    } finally { setResending(null); }
   }
 
   const filtered = filter === 'all' ? logs : logs.filter(l => l.status === filter);
@@ -104,12 +127,13 @@ export default function EmailCenterPanel() {
 
       {/* Email log table */}
       <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="px-4 py-3 grid grid-cols-12 gap-3 text-[10px] uppercase tracking-widest" style={{ background: 'rgba(255,255,255,0.03)', color: '#3a4570', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <div className="col-span-3">Recipient</div>
-          <div className="col-span-4">Subject</div>
-          <div className="col-span-2">Status</div>
-          <div className="col-span-2">Sent</div>
-          <div className="col-span-1">Order</div>
+        <div className="px-4 py-3 grid gap-3 text-[10px] uppercase tracking-widest" style={{ gridTemplateColumns: '2fr 3fr 1fr 1.5fr 1fr 60px', background: 'rgba(255,255,255,0.03)', color: '#3a4570', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div>Recipient</div>
+          <div>Subject</div>
+          <div>Status</div>
+          <div>Sent</div>
+          <div>Order</div>
+          <div></div>
         </div>
 
         {loading ? (
@@ -117,15 +141,15 @@ export default function EmailCenterPanel() {
         ) : filtered.length === 0 ? (
           <div className="px-4 py-10 text-center text-sm" style={{ color: '#3a4570' }}>No email logs found</div>
         ) : filtered.map(log => (
-          <div key={log.id} className="px-4 py-3 grid grid-cols-12 gap-3 items-center" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-            <div className="col-span-3 min-w-0">
+          <div key={log.id} className="px-4 py-3 grid gap-3 items-center" style={{ gridTemplateColumns: '2fr 3fr 1fr 1.5fr 1fr 60px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            <div className="min-w-0">
               <p className="text-xs truncate" style={{ color: '#c8d0f0' }}>{log.recipient}</p>
             </div>
-            <div className="col-span-4 min-w-0">
+            <div className="min-w-0">
               <p className="text-xs truncate" style={{ color: '#7b88c0' }}>{log.subject ?? '—'}</p>
               {log.error && <p className="text-[10px] truncate" style={{ color: '#FF6B6B' }}>{log.error}</p>}
             </div>
-            <div className="col-span-2">
+            <div>
               <span className="px-2 py-0.5 rounded text-[11px] font-bold" style={{
                 background: STATUS_BG[log.status] ?? 'rgba(255,255,255,0.05)',
                 color: STATUS_COLOR[log.status] ?? '#7b88c0',
@@ -134,23 +158,39 @@ export default function EmailCenterPanel() {
                 {log.status}
               </span>
             </div>
-            <div className="col-span-2">
+            <div>
               <p className="text-[11px]" style={{ color: '#3a4570' }}>
                 {format(new Date(log.sent_at), 'MMM d HH:mm')}
               </p>
             </div>
-            <div className="col-span-1">
+            <div>
               {log.order_id && (
                 <p className="text-[10px] font-mono" style={{ color: '#3a4570' }}>
                   {log.order_id.slice(0, 6)}…
                 </p>
               )}
             </div>
+            <div>
+              {log.order_id && (
+                <div>
+                  <button
+                    disabled={resending === log.id}
+                    onClick={() => resend(log.order_id!, log.id)}
+                    className="text-[10px] px-2 py-1 rounded font-bold"
+                    style={{ background: 'rgba(255,180,0,0.08)', border: '1px solid rgba(255,180,0,0.2)', color: '#FFB400', cursor: 'pointer', whiteSpace: 'nowrap', opacity: resending === log.id ? 0.5 : 1 }}>
+                    {resending === log.id ? '...' : 'Resend'}
+                  </button>
+                  {resendMsg?.id === log.id && (
+                    <p className="text-[9px] mt-0.5" style={{ color: resendMsg.ok ? '#00E676' : '#FF6B6B' }}>{resendMsg.text}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
-      <p className="text-[11px]" style={{ color: '#3a4570' }}>Auto-refreshes every 10 seconds · {filtered.length} records</p>
+      <p className="text-[11px]" style={{ color: '#3a4570' }}>Auto-refreshes every 10 seconds · {filtered.length} records · Resend re-sends the delivery email for any order.</p>
     </div>
   );
 }

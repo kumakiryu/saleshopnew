@@ -309,6 +309,23 @@ async function awardTokenTopup(userId: string, tokenType: 'vip' | 'reseller', am
 
 // ── Main fulfillment ──────────────────────────────────────────────────────────
 
+export async function resendOrderEmail(orderId: string): Promise<void> {
+  const order = await dbGet<Order>('orders', { id: orderId });
+  if (!order) throw new Error('Order not found');
+  const orderItems = await dbGetMany<OrderItem>('order_items', { order_id: orderId });
+  const deliveries: AssignedDelivery[] = [];
+  for (const item of orderItems) {
+    if (item.assigned_username && item.assigned_password) {
+      deliveries.push({ productName: item.product_name, type: 'account', username: item.assigned_username, password: item.assigned_password });
+    } else if (item.assigned_code) {
+      deliveries.push({ productName: item.product_name, type: 'code', code: item.assigned_code });
+    } else if (item.download_url) {
+      deliveries.push({ productName: item.product_name, type: 'download', downloadUrl: item.download_url });
+    }
+  }
+  await sendEmail(order, orderItems, deliveries);
+}
+
 export async function fulfillOrder(orderId: string): Promise<void> {
   console.log('[FULFILLMENT] Starting fulfillment for order', orderId);
 

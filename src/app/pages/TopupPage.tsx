@@ -79,8 +79,13 @@ export default function TopupPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? 'Payment failed'); return; }
-      if (data.checkoutUrl) window.location.href = data.checkoutUrl;
-      else if (data.orderId) navigate(`/order-status/${data.orderId}`);
+      if (selectedPay === 'coinsph') {
+        if (data.orderId) navigate(`/order-status/${data.orderId}`);
+      } else if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else if (data.orderId) {
+        navigate(`/order-status/${data.orderId}`);
+      }
     } catch (e: any) {
       setError(e?.message ?? 'Request failed');
     } finally { setLoading(false); }
