@@ -7,6 +7,6 @@
     { "source": "/:path*", "destination": "/index.html" }
   ],
   "crons": [
-    { "path": "/api/cron-stock-report", "schedule": "0 * * * *" }
+    { "path": "/api/cron-stock-report", "schedule": "0 8 * * *" }
   ]
 }
