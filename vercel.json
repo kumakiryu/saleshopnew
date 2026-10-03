@@ -5,5 +5,8 @@
     { "source": "/api/coinbase-webhook", "destination": "/api/webhook?p=coinbase" },
     { "source": "/api/coinsph-webhook", "destination": "/api/webhook?p=coinsph" },
     { "source": "/:path*", "destination": "/index.html" }
+  ],
+  "crons": [
+    { "path": "/api/cron-stock-report", "schedule": "0 * * * *" }
   ]
 }

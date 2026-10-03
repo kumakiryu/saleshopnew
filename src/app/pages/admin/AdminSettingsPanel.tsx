@@ -18,7 +18,7 @@ async function toQRDataURL(text: string, size = 240): Promise<string> {
 }
 
 const CSS = `
-  .as-input { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #e8eaf6; outline: none; border-radius: 8px; padding: 8px 12px; font-size: 14px; letter-spacing: 0.35em; text-align: center; font-family: 'Rajdhani','Inter',monospace; transition: border-color 0.2s; width: 100%; }
+  .as-input { background: var(--as3); border: 1px solid var(--ab2); color: var(--at); outline: none; border-radius: 8px; padding: 8px 12px; font-size: 14px; letter-spacing: 0.35em; text-align: center; font-family: 'Rajdhani','Inter',monospace; transition: border-color 0.2s; width: 100%; }
   .as-input:focus { border-color: rgba(0,191,255,0.4); }
   .as-input::placeholder { color: #2e3a5a; }
 `;
@@ -174,7 +174,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
 
       {/* Identity card */}
       <div className="rounded-2xl p-5 flex items-center gap-4"
-        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid var(--ab)' }}>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: `${rc}14`, border: `1px solid ${rc}35` }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={rc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -182,11 +182,11 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{adminEmail}</p>
+          <p className="text-sm font-semibold truncate" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{adminEmail}</p>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase"
               style={{ background: `${rc}12`, color: rc, border: `1px solid ${rc}30` }}>{role}</span>
-            <span className="text-[10px]" style={{ color: '#2e3a5a' }}>
+            <span className="text-[10px]" style={{ color: 'var(--atg)' }}>
               {totpEnabled ? '2FA active' : '2FA not set up'}
             </span>
           </div>
@@ -195,10 +195,10 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
 
       {/* 2FA Management */}
       <div className="rounded-2xl overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid var(--ab)' }}>
+        <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--ab)' }}>
           <h3 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>TWO-FACTOR AUTHENTICATION</h3>
-          <p className="text-[10px] mt-0.5" style={{ color: '#2e3a5a' }}>Required to access Code and Account Inventory</p>
+          <p className="text-[10px] mt-0.5" style={{ color: 'var(--atg)' }}>Required to access Code and Account Inventory</p>
         </div>
 
         <div className="px-5 py-5 flex flex-col gap-4">
@@ -219,7 +219,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
               {setupStep === 'idle' && (
                 <div className="flex items-start gap-4">
                   <div className="flex-1">
-                    <p className="text-xs mb-3" style={{ color: '#7b88c0' }}>
+                    <p className="text-xs mb-3" style={{ color: 'var(--atm)' }}>
                       Protect inventory access with a time-based one-time password. Compatible with Google Authenticator, Authy, Bitwarden, and 1Password.
                     </p>
                     <button onClick={startSetup} disabled={loading}
@@ -233,7 +233,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
 
               {setupStep === 'qr' && (
                 <div className="flex flex-col items-center gap-4">
-                  <p className="text-xs text-center" style={{ color: '#7b88c0' }}>
+                  <p className="text-xs text-center" style={{ color: 'var(--atm)' }}>
                     Scan with Google Authenticator, Authy, or any TOTP app. <strong style={{ color: '#ffffff' }}>Do not click "I've Scanned" until the app shows a 6-digit code.</strong>
                   </p>
                   {qrDataUrl && (
@@ -242,7 +242,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
                     </div>
                   )}
                   <div className="w-full rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,191,255,0.25)', background: 'rgba(0,191,255,0.05)' }}>
-                    <p className="text-[9px] uppercase tracking-widest px-3 pt-2.5 pb-1" style={{ color: '#3a4570' }}>
+                    <p className="text-[9px] uppercase tracking-widest px-3 pt-2.5 pb-1" style={{ color: 'var(--atg)' }}>
                       Can't scan? Add manually in your app
                     </p>
                     <div className="flex items-center gap-2 px-3 pb-3">
@@ -264,23 +264,23 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
 
               {setupStep === 'confirm' && (
                 <div className="flex flex-col gap-3">
-                  <p className="text-xs text-center" style={{ color: '#7b88c0' }}>Enter the 6-digit code from your authenticator app to complete setup.</p>
+                  <p className="text-xs text-center" style={{ color: 'var(--atm)' }}>Enter the 6-digit code from your authenticator app to complete setup.</p>
                   <input ref={inputRef} className="as-input" maxLength={6} inputMode="numeric" pattern="[0-9]*"
                     value={code} onChange={e => { setCode(e.target.value.replace(/\D/g, '')); resetError(); }}
                     placeholder="000000" onKeyDown={e => e.key === 'Enter' && confirmSetup()} />
                   <button onClick={confirmSetup} disabled={loading || code.length !== 6}
                     className="w-full py-3 rounded-xl text-sm font-bold tracking-wider"
                     style={{
-                      background: code.length === 6 ? 'linear-gradient(135deg, rgba(0,191,255,0.2) 0%, rgba(138,43,226,0.2) 100%)' : 'rgba(255,255,255,0.04)',
+                      background: code.length === 6 ? 'linear-gradient(135deg, rgba(0,191,255,0.2) 0%, rgba(138,43,226,0.2) 100%)' : 'var(--as3)',
                       border: `1px solid ${code.length === 6 ? 'rgba(0,191,255,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                      color: code.length === 6 ? '#ffffff' : '#2e3a5a',
+                      color: code.length === 6 ? '#ffffff' : 'var(--atg)',
                       cursor: code.length === 6 ? 'pointer' : 'not-allowed',
                       fontFamily: "'Rajdhani','Inter',sans-serif", opacity: loading ? 0.5 : 1,
                     }}>
                     {loading ? 'Verifying...' : 'Activate 2FA'}
                   </button>
                   <button onClick={() => { setSetupStep('qr'); setCode(''); resetError(); }}
-                    className="text-xs text-center" style={{ background: 'none', border: 'none', color: '#2e3a5a', cursor: 'pointer' }}>
+                    className="text-xs text-center" style={{ background: 'none', border: 'none', color: 'var(--atg)', cursor: 'pointer' }}>
                     ← Back to QR code
                   </button>
                 </div>
@@ -324,7 +324,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
                     </button>
                     <button onClick={() => { setDisableStep('idle'); setCode(''); resetError(); }}
                       className="px-4 py-2 rounded-lg text-xs"
-                      style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#3a4570', cursor: 'pointer' }}>
+                      style={{ background: 'transparent', border: '1px solid var(--ab2)', color: 'var(--atg)', cursor: 'pointer' }}>
                       Cancel
                     </button>
                   </div>
@@ -340,7 +340,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
         <div className="rounded-2xl p-5"
           style={{ background: 'rgba(255,68,68,0.04)', border: '1px solid rgba(255,68,68,0.15)' }}>
           <h3 className="font-bold tracking-widest text-sm mb-2" style={{ color: '#FF6B6B', fontFamily: "'Rajdhani','Inter',sans-serif" }}>EMERGENCY LOCKDOWN</h3>
-          <p className="text-xs mb-3" style={{ color: '#3a4570' }}>Immediately terminates all vault sessions and requires fresh 2FA authentication.</p>
+          <p className="text-xs mb-3" style={{ color: 'var(--atg)' }}>Immediately terminates all vault sessions and requires fresh 2FA authentication.</p>
           <button onClick={() => { lockVault(); setSuccess('Vault locked. All sessions terminated.'); }}
             className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide"
             style={{ background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)', color: '#FF6B6B', cursor: 'pointer', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
@@ -353,15 +353,15 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
       {role === 'owner' && (
         <div className="rounded-2xl overflow-hidden"
           style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(247,147,26,0.2)' }}>
-          <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--ab)' }}>
             <h3 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>ADMIN MANAGEMENT</h3>
-            <p className="text-[10px] mt-0.5" style={{ color: '#2e3a5a' }}>Visible to owners only — change roles for any admin</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--atg)' }}>Visible to owners only — change roles for any admin</p>
           </div>
           <div className="px-5 py-4">
             {adminsLoading ? (
-              <p className="text-xs py-3 text-center" style={{ color: '#2e3a5a' }}>Loading admins...</p>
+              <p className="text-xs py-3 text-center" style={{ color: 'var(--atg)' }}>Loading admins...</p>
             ) : admins.length === 0 ? (
-              <p className="text-xs py-3 text-center" style={{ color: '#2e3a5a' }}>No admins found.</p>
+              <p className="text-xs py-3 text-center" style={{ color: 'var(--atg)' }}>No admins found.</p>
             ) : (
               <div className="flex flex-col divide-y" style={{ '--tw-divide-opacity': 1 } as any}>
                 {admins.map(a => {
@@ -377,9 +377,9 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
                           </span>
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold truncate" style={{ color: '#c8d0f0' }}>{a.email}</p>
+                          <p className="text-xs font-semibold truncate" style={{ color: 'var(--at2)' }}>{a.email}</p>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[9px]" style={{ color: '#2e3a5a' }}>
+                            <span className="text-[9px]" style={{ color: 'var(--atg)' }}>
                               {a.totp_enabled ? '2FA on' : '2FA off'}
                             </span>
                             {isSelf && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,191,255,0.08)', color: '#00BFFF' }}>you</span>}
@@ -405,13 +405,13 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
                             opacity: roleChanging === a.id ? 0.5 : 1,
                           }}>
                           {ROLES.map(r => (
-                            <option key={r} value={r} style={{ background: '#080d28', color: '#c8d0f0' }}>
+                            <option key={r} value={r} style={{ background: '#080d28', color: 'var(--at2)' }}>
                               {r.charAt(0).toUpperCase() + r.slice(1)}
                             </option>
                           ))}
                         </select>
                         {roleChanging === a.id && (
-                          <span className="text-[10px]" style={{ color: '#2e3a5a' }}>saving…</span>
+                          <span className="text-[10px]" style={{ color: 'var(--atg)' }}>saving…</span>
                         )}
                       </div>
                     </div>
@@ -425,25 +425,25 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
 
       {/* Recent activity */}
       <div className="rounded-2xl overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid var(--ab)' }}>
+        <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--ab)' }}>
           <h3 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>RECENT SECURITY ACTIVITY</h3>
         </div>
         <div className="px-5 py-3">
           {logsLoading ? (
-            <p className="text-xs py-4 text-center" style={{ color: '#2e3a5a' }}>Loading...</p>
+            <p className="text-xs py-4 text-center" style={{ color: 'var(--atg)' }}>Loading...</p>
           ) : logs.length === 0 ? (
-            <p className="text-xs py-4 text-center" style={{ color: '#2e3a5a' }}>No activity recorded yet.</p>
+            <p className="text-xs py-4 text-center" style={{ color: 'var(--atg)' }}>No activity recorded yet.</p>
           ) : (
             <div className="flex flex-col divide-y" style={{ '--tw-divide-opacity': 1 } as any}>
               {logs.map(l => (
                 <div key={l.id} className="py-2.5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2.5">
                     <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: l.action.includes('disable') || l.action.includes('lock') ? '#FF6B6B' : '#00BFFF' }} />
-                    <span className="text-xs" style={{ color: '#7b88c0' }}>{ACTION_LABELS[l.action] ?? l.action}</span>
-                    {l.resource && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.04)', color: '#3a4570' }}>{l.resource}</span>}
+                    <span className="text-xs" style={{ color: 'var(--atm)' }}>{ACTION_LABELS[l.action] ?? l.action}</span>
+                    {l.resource && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--as3)', color: 'var(--atg)' }}>{l.resource}</span>}
                   </div>
-                  <span className="text-[10px] flex-shrink-0" style={{ color: '#2e3a5a' }}>
+                  <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--atg)' }}>
                     {new Date(l.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>

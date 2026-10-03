@@ -21,10 +21,10 @@ interface Membership { created_at: string; tier: string; }
 
 function StatCard({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color: string }) {
   return (
-    <div className="p-5 rounded-2xl flex flex-col gap-1" style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${color}22` }}>
+    <div className="p-5 rounded-2xl flex flex-col gap-1" style={{ background: 'var(--as1)', border: `1px solid ${color}22` }}>
       <p className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color }}>{label}</p>
-      <p className="text-2xl font-bold" style={{ color: '#e8eaf6' }}>{value}</p>
-      {sub && <p className="text-[11px]" style={{ color: '#4a5580' }}>{sub}</p>}
+      <p className="text-2xl font-bold" style={{ color: 'var(--at)' }}>{value}</p>
+      {sub && <p className="text-[11px]" style={{ color: 'var(--atf)' }}>{sub}</p>}
     </div>
   );
 }
@@ -107,7 +107,7 @@ export default function AnalyticsPanel() {
   if (error) return (
     <div className="flex flex-col items-center gap-3 py-20">
       <p className="text-sm" style={{ color: '#FF6B6B' }}>Could not load analytics</p>
-      <p className="text-xs" style={{ color: '#3a4570' }}>{error}</p>
+      <p className="text-xs" style={{ color: 'var(--atg)' }}>{error}</p>
       <button onClick={loadData} className="px-4 py-2 rounded-lg text-xs font-bold"
         style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)', color: '#00BFFF', cursor: 'pointer' }}>
         Retry
@@ -123,14 +123,14 @@ export default function AnalyticsPanel() {
     <div className="space-y-6">
       {/* Header + range selector */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <p className="text-xs uppercase tracking-[0.2em] font-bold" style={{ color: '#4a5580' }}>Store Analytics</p>
-        <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <p className="text-xs uppercase tracking-[0.2em] font-bold" style={{ color: 'var(--atf)' }}>Store Analytics</p>
+        <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: 'var(--as2)', border: '1px solid var(--ab)' }}>
           {RANGES.map(r => (
             <button key={r.key} onClick={() => setRange(r.key)}
               style={{
                 padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
                 background: range === r.key ? 'rgba(0,191,255,0.12)' : 'transparent',
-                color: range === r.key ? '#00BFFF' : '#4a5580',
+                color: range === r.key ? '#00BFFF' : 'var(--atf)',
                 border: range === r.key ? '1px solid rgba(0,191,255,0.25)' : '1px solid transparent',
               }}>
               {r.label}
@@ -148,18 +148,18 @@ export default function AnalyticsPanel() {
       </div>
 
       {/* Revenue chart */}
-      <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-xs font-bold uppercase tracking-[0.15em] mb-4" style={{ color: '#c8d0f0' }}>Revenue (₱)</p>
+      <div className="p-5 rounded-2xl" style={{ background: 'var(--as1)', border: '1px solid var(--ab)' }}>
+        <p className="text-xs font-bold uppercase tracking-[0.15em] mb-4" style={{ color: 'var(--at2)' }}>Revenue (₱)</p>
         {noRevenue
-          ? <p className="text-xs py-10 text-center" style={{ color: '#3a4570' }}>No revenue data for this period</p>
+          ? <p className="text-xs py-10 text-center" style={{ color: 'var(--atg)' }}>No revenue data for this period</p>
           : <ResponsiveContainer width="100%" height={200}>
               <LineChart data={revenueData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid {...GRID_STYLE} vertical={false} />
                 <XAxis dataKey="label" tick={TICK_STYLE} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                 <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} width={44}
                   tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)} />
-                <Tooltip contentStyle={{ background: 'rgba(8,10,24,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, fontSize: 12 }}
-                  labelStyle={{ color: '#7b88c0' }} itemStyle={{ color: '#00E676' }}
+                <Tooltip contentStyle={{ background: 'rgba(8,10,24,0.95)', border: '1px solid var(--ab2)', borderRadius: 10, fontSize: 12 }}
+                  labelStyle={{ color: 'var(--atm)' }} itemStyle={{ color: '#00E676' }}
                   formatter={(v: number) => [`₱${v.toLocaleString()}`, 'Revenue']} />
                 <Line type="monotone" dataKey="revenue" stroke="#00E676" strokeWidth={2.5} dot={false} activeDot={{ r: 4, fill: '#00E676' }} />
               </LineChart>
@@ -168,17 +168,17 @@ export default function AnalyticsPanel() {
       </div>
 
       {/* Orders chart */}
-      <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-xs font-bold uppercase tracking-[0.15em] mb-4" style={{ color: '#c8d0f0' }}>Orders Per Day</p>
+      <div className="p-5 rounded-2xl" style={{ background: 'var(--as1)', border: '1px solid var(--ab)' }}>
+        <p className="text-xs font-bold uppercase tracking-[0.15em] mb-4" style={{ color: 'var(--at2)' }}>Orders Per Day</p>
         {noOrders
-          ? <p className="text-xs py-8 text-center" style={{ color: '#3a4570' }}>No orders for this period</p>
+          ? <p className="text-xs py-8 text-center" style={{ color: 'var(--atg)' }}>No orders for this period</p>
           : <ResponsiveContainer width="100%" height={160}>
               <BarChart data={revenueData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid {...GRID_STYLE} vertical={false} />
                 <XAxis dataKey="label" tick={TICK_STYLE} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                 <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} width={30} allowDecimals={false} />
-                <Tooltip contentStyle={{ background: 'rgba(8,10,24,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, fontSize: 12 }}
-                  labelStyle={{ color: '#7b88c0' }} itemStyle={{ color: '#00BFFF' }}
+                <Tooltip contentStyle={{ background: 'rgba(8,10,24,0.95)', border: '1px solid var(--ab2)', borderRadius: 10, fontSize: 12 }}
+                  labelStyle={{ color: 'var(--atm)' }} itemStyle={{ color: '#00BFFF' }}
                   formatter={(v: number) => [v, 'Orders']} />
                 <Bar dataKey="orders" fill="#00BFFF" fillOpacity={0.65} radius={[3, 3, 0, 0]} />
               </BarChart>
@@ -187,18 +187,18 @@ export default function AnalyticsPanel() {
       </div>
 
       {/* Members chart */}
-      <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-xs font-bold uppercase tracking-[0.15em] mb-4" style={{ color: '#c8d0f0' }}>New Member Signups</p>
+      <div className="p-5 rounded-2xl" style={{ background: 'var(--as1)', border: '1px solid var(--ab)' }}>
+        <p className="text-xs font-bold uppercase tracking-[0.15em] mb-4" style={{ color: 'var(--at2)' }}>New Member Signups</p>
         {noMembers
-          ? <p className="text-xs py-8 text-center" style={{ color: '#3a4570' }}>No new members for this period</p>
+          ? <p className="text-xs py-8 text-center" style={{ color: 'var(--atg)' }}>No new members for this period</p>
           : <ResponsiveContainer width="100%" height={160}>
               <BarChart data={memberData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid {...GRID_STYLE} vertical={false} />
                 <XAxis dataKey="label" tick={TICK_STYLE} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                 <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} width={30} allowDecimals={false} />
-                <Tooltip contentStyle={{ background: 'rgba(8,10,24,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, fontSize: 12 }}
-                  labelStyle={{ color: '#7b88c0' }} />
-                <Legend wrapperStyle={{ fontSize: 10, color: '#4a5580', paddingTop: 8 }} />
+                <Tooltip contentStyle={{ background: 'rgba(8,10,24,0.95)', border: '1px solid var(--ab2)', borderRadius: 10, fontSize: 12 }}
+                  labelStyle={{ color: 'var(--atm)' }} />
+                <Legend wrapperStyle={{ fontSize: 10, color: 'var(--atf)', paddingTop: 8 }} />
                 <Bar dataKey="vip" name="VIP" fill="#FFB400" fillOpacity={0.75} radius={[3, 3, 0, 0]} stackId="a" />
                 <Bar dataKey="reseller" name="Reseller" fill="#00E676" fillOpacity={0.75} radius={[3, 3, 0, 0]} stackId="a" />
               </BarChart>

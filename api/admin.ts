@@ -382,6 +382,49 @@ async function handleSetConfig(req: VercelRequest, res: VercelResponse) {
   return res.status(r.ok ? 200 : 500).json(r.ok ? { ok: true } : { error: 'Failed to save' });
 }
 
+async function handleSendPasswordReset(req: VercelRequest, res: VercelResponse) {
+  const auth = await verifyAdmin(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.reason });
+  const email = String((req.body as any)?.email ?? '').trim();
+  if (!email) return res.status(400).json({ error: 'email required' });
+
+  const SUPABASE_URL = process.env.SUPABASE_URL ?? 'https://hxfccpadsbunynignbwn.supabase.co';
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+    method: 'POST',
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({})) as any;
+    return res.status(400).json({ error: err?.msg ?? err?.error_description ?? 'Failed to send reset email' });
+  }
+  return res.status(200).json({ ok: true });
+}
+
+async function handleSetPassword(req: VercelRequest, res: VercelResponse) {
+  const auth = await verifyAdmin(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.reason });
+  const { user_id, password } = (req.body as any) ?? {};
+  if (!user_id || !password) return res.status(400).json({ error: 'user_id and password required' });
+  if (String(password).length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+  const SUPABASE_URL = process.env.SUPABASE_URL ?? 'https://hxfccpadsbunynignbwn.supabase.co';
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${user_id}`, {
+    method: 'PUT',
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: String(password) }),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({})) as any;
+    return res.status(400).json({ error: err?.msg ?? err?.message ?? 'Failed to set password' });
+  }
+  return res.status(200).json({ ok: true });
+}
+
 // ── Main dispatcher ───────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -397,6 +440,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'redemption-logs': return await handleRedemptionLogs(req, res);
       case 'resend-email': return await handleResendEmail(req, res);
       case 'set-config': return await handleSetConfig(req, res);
+      case 'send-password-reset': return await handleSendPasswordReset(req, res);
+      case 'set-password': return await handleSetPassword(req, res);
       default: return res.status(400).json({ error: `Unknown action: ${action}` });
     }
   } catch (err: unknown) {

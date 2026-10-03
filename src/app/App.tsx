@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router';
 import { CustomerAuthProvider } from '@/lib/customerAuth';
 import MaintenanceGate from './components/MaintenanceGate';
+import GlobalMusicPlayer from './components/GlobalMusicPlayer';
 import ShopPage from './pages/ShopPage';
 import AdminPage from './pages/AdminPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
@@ -19,6 +20,7 @@ export default function App() {
     <BrowserRouter>
       <CustomerAuthProvider>
         <MaintenanceGate>
+          <GlobalMusicPlayer />
           <Routes>
             <Route path="/" element={<ShopPage />} />
             <Route path="/stock" element={<ShopPage />} />

@@ -3,11 +3,11 @@ import { supabase } from '@/lib/supabase';
 import type { Product, ProductAccount } from '@/lib/types';
 
 const CSS = `
-  .ai-input { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #e8eaf6; outline: none; border-radius: 8px; padding: 8px 12px; font-size: 13px; transition: border-color 0.2s; font-family: 'Inter', sans-serif; width: 100%; }
+  .ai-input { background: var(--as3); border: 1px solid var(--ab2); color: var(--at); outline: none; border-radius: 8px; padding: 8px 12px; font-size: 13px; transition: border-color 0.2s; font-family: 'Inter', sans-serif; width: 100%; }
   .ai-input:focus { border-color: rgba(138,43,226,0.4); }
   .ai-input::placeholder { color: #2e3a5a; }
   .ai-row { transition: background 0.15s; }
-  .ai-row:hover { background: rgba(255,255,255,0.02); }
+  .ai-row:hover { background: var(--as1); }
 `;
 
 interface Props { products: Product[]; }
@@ -118,14 +118,14 @@ export default function AccountInventoryPanel({ products }: Props) {
 
   return (
     <div className="rounded-2xl overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid var(--ab)' }}>
       <style>{CSS}</style>
 
       {/* Header */}
-      <div className="px-6 py-4 flex items-center justify-between flex-wrap gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="px-6 py-4 flex items-center justify-between flex-wrap gap-3" style={{ borderBottom: '1px solid var(--ab)' }}>
         <div>
           <h2 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>ACCOUNT INVENTORY</h2>
-          <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: '#2e3a5a' }}>{available} available · {delivered} delivered · {accounts.length} total</p>
+          <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: 'var(--atg)' }}>{available} available · {delivered} delivered · {accounts.length} total</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {isLow && (
@@ -149,7 +149,7 @@ export default function AccountInventoryPanel({ products }: Props) {
       <div className="px-6 py-4 flex flex-col gap-4">
 
         {acctProducts.length === 0 ? (
-          <p className="text-xs text-center py-6" style={{ color: '#2e3a5a' }}>No Account Product products found. Set a product type to "Account Product" in the Products tab first.</p>
+          <p className="text-xs text-center py-6" style={{ color: 'var(--atg)' }}>No Account Product products found. Set a product type to "Account Product" in the Products tab first.</p>
         ) : (
           <>
             {/* Product selector + filter + search */}
@@ -164,13 +164,13 @@ export default function AccountInventoryPanel({ products }: Props) {
               <input className="ai-input flex-1" style={{ maxWidth: '200px' }} value={search}
                 onChange={e => setSearch(e.target.value)} placeholder="Search username..." />
 
-              <div className="flex gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex gap-1 p-0.5 rounded-lg" style={{ background: 'var(--as2)', border: '1px solid var(--ab)' }}>
                 {(['all', 'available', 'delivered'] as AcctFilter[]).map(f => (
                   <button key={f} onClick={() => setFilter(f)}
                     className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide"
                     style={{
                       background: filter === f ? 'rgba(138,43,226,0.1)' : 'transparent',
-                      color: filter === f ? '#8A2BE2' : '#3a4570',
+                      color: filter === f ? '#8A2BE2' : 'var(--atg)',
                       border: `1px solid ${filter === f ? 'rgba(138,43,226,0.3)' : 'transparent'}`,
                       cursor: 'pointer',
                     }}>{f}</button>
@@ -207,7 +207,7 @@ export default function AccountInventoryPanel({ products }: Props) {
                   </button>
                   <button onClick={() => setShowBulk(false)}
                     className="px-3 py-2 rounded-lg text-xs"
-                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#3a4570', cursor: 'pointer' }}>
+                    style={{ background: 'transparent', border: '1px solid var(--ab2)', color: 'var(--atg)', cursor: 'pointer' }}>
                     Cancel
                   </button>
                 </div>
@@ -216,19 +216,19 @@ export default function AccountInventoryPanel({ products }: Props) {
 
             {/* Account list */}
             {loading ? (
-              <div className="py-8 text-center text-xs uppercase tracking-widest" style={{ color: '#2e3a5a' }}>Loading...</div>
+              <div className="py-8 text-center text-xs uppercase tracking-widest" style={{ color: 'var(--atg)' }}>Loading...</div>
             ) : filtered.length === 0 ? (
-              <div className="py-8 text-center text-xs" style={{ color: '#2e3a5a' }}>
+              <div className="py-8 text-center text-xs" style={{ color: 'var(--atg)' }}>
                 {search ? `No results for "${search}".` : filter === 'all' ? 'No accounts yet. Add accounts above.' : `No ${filter} accounts.`}
               </div>
             ) : (
-              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--ab)' }}>
                 <div className="grid px-4 py-2 text-[10px] uppercase tracking-widest"
-                  style={{ gridTemplateColumns: '1fr 1fr 90px 80px', background: 'rgba(255,255,255,0.02)', color: '#2e3a5a' }}>
+                  style={{ gridTemplateColumns: '1fr 1fr 90px 80px', background: 'var(--as1)', color: 'var(--atg)' }}>
                   <span>Username</span><span>Password</span><span>Status</span><span className="text-right">Actions</span>
                 </div>
                 {filtered.map(a => (
-                  <div key={a.id} style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div key={a.id} style={{ borderTop: '1px solid var(--ab)' }}>
                     {editId === a.id ? (
                       // Inline edit row
                       <div className="grid px-4 py-2.5 items-center gap-2"
@@ -244,7 +244,7 @@ export default function AccountInventoryPanel({ products }: Props) {
                           </button>
                           <button onClick={() => setEditId(null)}
                             className="text-[10px] px-2 py-1 rounded"
-                            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#3a4570', cursor: 'pointer' }}>
+                            style={{ background: 'transparent', border: '1px solid var(--ab2)', color: 'var(--atg)', cursor: 'pointer' }}>
                             ✕
                           </button>
                         </div>
@@ -253,13 +253,13 @@ export default function AccountInventoryPanel({ products }: Props) {
                       // Normal row
                       <div className="ai-row grid px-4 py-3 items-center"
                         style={{ gridTemplateColumns: '1fr 1fr 90px 80px' }}>
-                        <span className="text-xs font-mono truncate pr-2" style={{ color: '#c8d0f0' }}>{a.username}</span>
+                        <span className="text-xs font-mono truncate pr-2" style={{ color: 'var(--at2)' }}>{a.username}</span>
                         <div className="flex items-center gap-1.5 min-w-0 pr-2">
-                          <span className="text-xs font-mono truncate" style={{ color: showPw[a.id] ? '#c8d0f0' : '#2e3a5a', letterSpacing: showPw[a.id] ? 'normal' : '0.15em' }}>
+                          <span className="text-xs font-mono truncate" style={{ color: showPw[a.id] ? 'var(--at2)' : 'var(--atg)', letterSpacing: showPw[a.id] ? 'normal' : '0.15em' }}>
                             {showPw[a.id] ? a.password : '••••••••'}
                           </span>
                           <button onClick={() => setShowPw(p => ({ ...p, [a.id]: !p[a.id] }))}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2e3a5a', padding: '0', flexShrink: 0 }}>
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--atg)', padding: '0', flexShrink: 0 }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               {showPw[a.id]
                                 ? <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></>
@@ -287,7 +287,7 @@ export default function AccountInventoryPanel({ products }: Props) {
                             </button>
                           )}
                           {a.status === 'delivered' && a.assigned_order_id && (
-                            <span className="text-[10px]" style={{ color: '#2e3a5a' }}>{a.assigned_order_id.slice(0, 8).toUpperCase()}</span>
+                            <span className="text-[10px]" style={{ color: 'var(--atg)' }}>{a.assigned_order_id.slice(0, 8).toUpperCase()}</span>
                           )}
                         </div>
                       </div>

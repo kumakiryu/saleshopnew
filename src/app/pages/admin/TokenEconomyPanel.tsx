@@ -214,9 +214,9 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
 
   const inp = (label: string, key: string, type = 'text', placeholder = '') => (
     <div key={key}>
-      <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: '#7b88c0' }}>{label}</label>
+      <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: 'var(--atm)' }}>{label}</label>
       <input type={type} value={(rewardForm as any)[key] ?? ''} onChange={e => setRewardForm(f => ({ ...f, [key]: type === 'number' ? Number(e.target.value) : e.target.value }))} placeholder={placeholder}
-        style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }} />
+        style={{ width: '100%', background: 'var(--as3)', border: '1px solid var(--ab2)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }} />
     </div>
   );
 
@@ -235,7 +235,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
       <div className="flex gap-2 mb-6 flex-wrap">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setSubTab(t.key)} className="px-4 py-2 rounded-lg text-xs font-bold"
-            style={{ background: subTab === t.key ? 'rgba(255,180,0,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${subTab === t.key ? 'rgba(255,180,0,0.35)' : 'rgba(255,255,255,0.08)'}`, color: subTab === t.key ? '#FFB400' : '#7b88c0', cursor: 'pointer' }}>
+            style={{ background: subTab === t.key ? 'rgba(255,180,0,0.15)' : 'var(--as3)', border: `1px solid ${subTab === t.key ? 'rgba(255,180,0,0.35)' : 'rgba(255,255,255,0.08)'}`, color: subTab === t.key ? '#FFB400' : 'var(--atm)', cursor: 'pointer' }}>
             {t.label}
           </button>
         ))}
@@ -251,19 +251,19 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
               { label: 'Reward Products', value: rewards.length, color: '#00BFFF' },
               { label: 'Active Members', value: members.length, color: '#8A2BE2' },
             ].map(s => (
-              <div key={s.label} className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${s.color}20` }}>
+              <div key={s.label} className="p-4 rounded-xl" style={{ background: 'var(--as2)', border: `1px solid ${s.color}20` }}>
                 <p className="text-2xl font-black mb-0.5" style={{ color: s.color, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{s.value}</p>
-                <p className="text-[10px] uppercase tracking-widest" style={{ color: '#3a4570' }}>{s.label}</p>
+                <p className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--atg)' }}>{s.label}</p>
               </div>
             ))}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {[{ title: 'VIP Top Holders', entries: vipLeaders, color: '#FFB400' }, { title: 'Reseller Top Holders', entries: resellerLeaders, color: '#00E676' }].map(({ title, entries, color }) => (
-              <div key={title} className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${color}18` }}>
-                <p className="px-5 py-3 text-xs font-bold uppercase tracking-widest" style={{ color, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>{title}</p>
-                {entries.length === 0 ? <p className="px-5 py-6 text-xs" style={{ color: '#3a4570' }}>No data yet</p> : entries.slice(0, 5).map(e => (
-                  <div key={e.user_id} className="flex items-center justify-between px-5 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                    <span className="text-xs" style={{ color: '#7b88c0' }}>#{e.rank} {e.email}</span>
+              <div key={title} className="rounded-2xl overflow-hidden" style={{ background: 'var(--as1)', border: `1px solid ${color}18` }}>
+                <p className="px-5 py-3 text-xs font-bold uppercase tracking-widest" style={{ color, borderBottom: '1px solid var(--ab)' }}>{title}</p>
+                {entries.length === 0 ? <p className="px-5 py-6 text-xs" style={{ color: 'var(--atg)' }}>No data yet</p> : entries.slice(0, 5).map(e => (
+                  <div key={e.user_id} className="flex items-center justify-between px-5 py-2.5" style={{ borderBottom: '1px solid var(--ab)' }}>
+                    <span className="text-xs" style={{ color: 'var(--atm)' }}>#{e.rank} {e.email}</span>
                     <span className="text-xs font-bold" style={{ color }}>{e.tokens} <TokenIcon size={12} /></span>
                   </div>
                 ))}
@@ -276,30 +276,30 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
       {/* Manage Tokens */}
       {subTab === 'manage' && (
         <div className="max-w-md">
-          <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p className="text-sm font-bold mb-4 uppercase tracking-widest" style={{ color: '#c8d0f0' }}>Adjust Member Tokens</p>
+          <div className="p-5 rounded-2xl" style={{ background: 'var(--as1)', border: '1px solid var(--ab)' }}>
+            <p className="text-sm font-bold mb-4 uppercase tracking-widest" style={{ color: 'var(--at2)' }}>Adjust Member Tokens</p>
             <div className="flex flex-col gap-3">
               <div>
-                <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: '#7b88c0' }}>Member</label>
+                <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: 'var(--atm)' }}>Member</label>
                 <select value={tokenOp.userId} onChange={e => setTokenOp(o => ({ ...o, userId: e.target.value }))}
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
+                  style={{ width: '100%', background: 'var(--as3)', border: '1px solid var(--ab2)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
                   <option value="">— Select member —</option>
                   {members.map((m: any) => <option key={m.email} value={m.email}>{m.email} ({m.tier})</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: '#7b88c0' }}>Token Type</label>
+                  <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: 'var(--atm)' }}>Token Type</label>
                   <select value={tokenOp.type} onChange={e => setTokenOp(o => ({ ...o, type: e.target.value as 'vip' | 'reseller' }))}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
+                    style={{ width: '100%', background: 'var(--as3)', border: '1px solid var(--ab2)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
                     <option value="vip">VIP</option>
                     <option value="reseller">Reseller</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: '#7b88c0' }}>Action</label>
+                  <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: 'var(--atm)' }}>Action</label>
                   <select value={tokenOp.action} onChange={e => setTokenOp(o => ({ ...o, action: e.target.value as 'add' | 'remove' | 'reset' }))}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
+                    style={{ width: '100%', background: 'var(--as3)', border: '1px solid var(--ab2)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
                     <option value="add">Add</option>
                     <option value="remove">Remove</option>
                     <option value="reset">Reset to 0</option>
@@ -308,9 +308,9 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
               </div>
               {tokenOp.action !== 'reset' && (
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: '#7b88c0' }}>Amount</label>
+                  <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: 'var(--atm)' }}>Amount</label>
                   <input type="number" min="1" value={tokenOp.amount} onChange={e => setTokenOp(o => ({ ...o, amount: e.target.value }))} placeholder="0"
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }} />
+                    style={{ width: '100%', background: 'var(--as3)', border: '1px solid var(--ab2)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }} />
                 </div>
               )}
               {tokenOpMsg && <p className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(0,230,118,0.08)', color: '#00E676' }}>{tokenOpMsg}</p>}
@@ -327,16 +327,16 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
       {/* Reward Products */}
       {subTab === 'rewards' && (
         <div>
-          <div className="p-5 rounded-2xl mb-6" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p className="text-sm font-bold mb-4 uppercase tracking-widest" style={{ color: '#c8d0f0' }}>{editingReward ? 'Edit Reward' : 'New Reward'}</p>
+          <div className="p-5 rounded-2xl mb-6" style={{ background: 'var(--as1)', border: '1px solid var(--ab)' }}>
+            <p className="text-sm font-bold mb-4 uppercase tracking-widest" style={{ color: 'var(--at2)' }}>{editingReward ? 'Edit Reward' : 'New Reward'}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               {inp('Name', 'name', 'text', 'Reward name')}
               {inp('Token Cost', 'token_cost', 'number', '100')}
               {inp('Stock (-1 = unlimited)', 'stock', 'number', '-1')}
               <div>
-                <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: '#7b88c0' }}>For Membership</label>
+                <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: 'var(--atm)' }}>For Membership</label>
                 <select value={(rewardForm as any).membership_type ?? 'both'} onChange={e => setRewardForm(f => ({ ...f, membership_type: e.target.value as any }))}
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
+                  style={{ width: '100%', background: 'var(--as3)', border: '1px solid var(--ab2)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
                   <option value="both">Both VIP & Reseller</option>
                   <option value="vip">VIP Only</option>
                   <option value="reseller">Reseller Only</option>
@@ -345,30 +345,30 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
             </div>
             {inp('Description', 'description', 'text', 'Optional')}
             <div className="mt-3">
-              <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: '#7b88c0' }}>Delivery Content <span style={{ color: '#FF8C00' }}>★ Shown to member after redeeming</span></label>
+              <label className="text-[10px] uppercase tracking-widest mb-1 block" style={{ color: 'var(--atm)' }}>Delivery Content <span style={{ color: '#FF8C00' }}>★ Shown to member after redeeming</span></label>
               <textarea value={(rewardForm as any).delivery_content ?? ''} onChange={e => setRewardForm(f => ({ ...f, delivery_content: e.target.value }))} placeholder="e.g. product key, account details, instructions..."
-                rows={3} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,140,0,0.25)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13, resize: 'vertical', fontFamily: 'monospace' }} />
+                rows={3} style={{ width: '100%', background: 'var(--as3)', border: '1px solid rgba(255,140,0,0.25)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13, resize: 'vertical', fontFamily: 'monospace' }} />
             </div>
             <div className="mt-3">{inp('Image URL', 'image_url', 'text', 'https://...')}</div>
             {rewardMsg && <p className="mt-3 text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(0,230,118,0.08)', color: '#00E676' }}>{rewardMsg}</p>}
             {rewardErr && <p className="mt-3 text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(255,68,68,0.08)', color: '#FF6B6B' }}>{rewardErr}</p>}
             <div className="flex gap-3 mt-4">
-              {editingReward && <button onClick={() => { setEditingReward(null); setRewardForm({}); }} className="px-4 py-2 rounded-lg text-xs font-semibold" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#7b88c0', cursor: 'pointer' }}>Cancel</button>}
+              {editingReward && <button onClick={() => { setEditingReward(null); setRewardForm({}); }} className="px-4 py-2 rounded-lg text-xs font-semibold" style={{ background: 'transparent', border: '1px solid var(--ab2)', color: 'var(--atm)', cursor: 'pointer' }}>Cancel</button>}
               <button onClick={saveReward} disabled={rewardLoading} className="px-6 py-2 rounded-lg text-xs font-bold" style={{ background: 'rgba(255,180,0,0.12)', border: '1px solid rgba(255,180,0,0.3)', color: '#FFB400', cursor: 'pointer' }}>
                 {rewardLoading ? 'Saving...' : editingReward ? 'Save Changes' : 'Create Reward'}
               </button>
             </div>
           </div>
-          <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            {rewards.length === 0 ? <p className="px-5 py-8 text-xs" style={{ color: '#3a4570' }}>No reward products yet.</p> : rewards.map(r => {
+          <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--as1)', border: '1px solid var(--ab)' }}>
+            {rewards.length === 0 ? <p className="px-5 py-8 text-xs" style={{ color: 'var(--atg)' }}>No reward products yet.</p> : rewards.map(r => {
               const cc = codeCounts[r.id];
               const isImporting = importingFor === r.id;
               return (
-                <div key={r.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <div key={r.id} style={{ borderBottom: '1px solid var(--ab)' }}>
                   <div className="flex items-center gap-4 px-5 py-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate" style={{ color: r.active ? '#c8d0f0' : '#3a4570' }}>{r.name}</p>
-                      <p className="text-[10px]" style={{ color: '#3a4570' }}>
+                      <p className="text-sm font-semibold truncate" style={{ color: r.active ? 'var(--at2)' : 'var(--atg)' }}>{r.name}</p>
+                      <p className="text-[10px]" style={{ color: 'var(--atg)' }}>
                         {r.token_cost} <TokenIcon size={11} /> · {r.membership_type} · stock: {r.stock < 0 ? '∞' : r.stock}
                         {cc ? <span style={{ color: cc.available > 0 ? '#00E676' : '#FF6B6B' }}> · codes: {cc.available}/{cc.total} avail</span> : null}
                       </p>
@@ -389,7 +389,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
                         onChange={e => setImportText(e.target.value)}
                         placeholder={"CODE001\nCODE002\nCODE003"}
                         rows={5}
-                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(138,43,226,0.3)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 12, resize: 'vertical', fontFamily: 'monospace' }}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(138,43,226,0.3)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 12, resize: 'vertical', fontFamily: 'monospace' }}
                       />
                       <div className="flex items-center gap-3 mt-2">
                         <button onClick={() => importBulkCodes(r.id)} disabled={importLoading || !importText.trim()} className="px-4 py-2 rounded-lg text-xs font-bold" style={{ background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.35)', color: '#B06EFF', cursor: importLoading || !importText.trim() ? 'not-allowed' : 'pointer' }}>
@@ -410,30 +410,30 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
       {subTab === 'logs' && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-bold uppercase tracking-widest" style={{ color: '#c8d0f0' }}>Redemption History</p>
+            <p className="text-sm font-bold uppercase tracking-widest" style={{ color: 'var(--at2)' }}>Redemption History</p>
             <button onClick={loadRedemptionLogs} disabled={logsLoading} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)', color: '#00BFFF', cursor: 'pointer' }}>
               {logsLoading ? 'Loading...' : 'Refresh'}
             </button>
           </div>
           {redemptionLogs.length === 0 ? (
-            <div className="rounded-2xl py-12 text-center" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="rounded-2xl py-12 text-center" style={{ background: 'var(--as1)', border: '1px solid var(--ab)' }}>
               <p className="text-3xl mb-2">📋</p>
-              <p className="text-xs" style={{ color: '#3a4570' }}>No redemptions yet. Click Refresh to load.</p>
+              <p className="text-xs" style={{ color: 'var(--atg)' }}>No redemptions yet. Click Refresh to load.</p>
             </div>
           ) : (
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <div className="grid px-5 py-2" style={{ gridTemplateColumns: '1fr 1fr 80px 1fr', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--as1)', border: '1px solid var(--ab)' }}>
+              <div className="grid px-5 py-2" style={{ gridTemplateColumns: '1fr 1fr 80px 1fr', borderBottom: '1px solid var(--ab)' }}>
                 {['Date', 'Member', 'Tokens', 'Reward / Code'].map(h => (
-                  <span key={h} className="text-[10px] uppercase tracking-widest" style={{ color: '#3a4570' }}>{h}</span>
+                  <span key={h} className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--atg)' }}>{h}</span>
                 ))}
               </div>
               {redemptionLogs.map((log: any, i: number) => (
-                <div key={log.id ?? i} className="grid items-start px-5 py-3 gap-2" style={{ gridTemplateColumns: '1fr 1fr 80px 1fr', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                  <span className="text-[11px]" style={{ color: '#7b88c0' }}>{new Date(log.created_at).toLocaleDateString()} {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span className="text-[11px] truncate" style={{ color: '#c8d0f0' }}>{log.user_email ?? log.user_id}</span>
+                <div key={log.id ?? i} className="grid items-start px-5 py-3 gap-2" style={{ gridTemplateColumns: '1fr 1fr 80px 1fr', borderBottom: '1px solid var(--ab)' }}>
+                  <span className="text-[11px]" style={{ color: 'var(--atm)' }}>{new Date(log.created_at).toLocaleDateString()} {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-[11px] truncate" style={{ color: 'var(--at2)' }}>{log.user_email ?? log.user_id}</span>
                   <span className="text-[11px] font-bold" style={{ color: '#FFB400' }}>{log.tokens_spent} <TokenIcon size={10} /></span>
                   <div>
-                    <p className="text-[11px] font-semibold" style={{ color: '#e8eaf6' }}>{log.reward_name}</p>
+                    <p className="text-[11px] font-semibold" style={{ color: 'var(--at)' }}>{log.reward_name}</p>
                     {log.code_delivered && <p className="text-[10px] mt-0.5 font-mono break-all" style={{ color: '#B06EFF' }}>{log.code_delivered}</p>}
                   </div>
                 </div>
@@ -448,29 +448,29 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
         <div className="max-w-2xl">
 
           {/* Package editor */}
-          <div className="p-5 rounded-2xl mb-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p className="text-sm font-bold mb-1 uppercase tracking-widest" style={{ color: '#c8d0f0' }}>⚡ Top-Up Packages</p>
-            <p className="text-xs mb-4" style={{ color: '#7b88c0' }}>Set the price (₱) and token amount for each of the two packages shown at checkout.</p>
+          <div className="p-5 rounded-2xl mb-5" style={{ background: 'var(--as1)', border: '1px solid var(--ab)' }}>
+            <p className="text-sm font-bold mb-1 uppercase tracking-widest" style={{ color: 'var(--at2)' }}>⚡ Top-Up Packages</p>
+            <p className="text-xs mb-4" style={{ color: 'var(--atm)' }}>Set the price (₱) and token amount for each of the two packages shown at checkout.</p>
             <div className="flex flex-col gap-3">
               {([
                 { label: 'Package 1', price: pkg500Price, tokens: pkg500Tokens, setPrice: setPkg500Price, setTokens: setPkg500Tokens, accent: '#7b88c0' },
                 { label: 'Package 2 (Best Value)', price: pkg1000Price, tokens: pkg1000Tokens, setPrice: setPkg1000Price, setTokens: setPkg1000Tokens, accent: '#FFB400' },
               ] as const).map(pkg => (
-                <div key={pkg.label} className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div key={pkg.label} className="p-4 rounded-xl" style={{ background: 'var(--as2)', border: '1px solid var(--ab)' }}>
                   <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: pkg.accent }}>{pkg.label}</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: '#7b88c0' }}>Price (₱)</label>
+                      <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--atm)' }}>Price (₱)</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold" style={{ color: '#3a4570' }}>₱</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold" style={{ color: 'var(--atg)' }}>₱</span>
                         <input type="number" min="1" step="1" value={pkg.price} onChange={e => pkg.setPrice(Number(e.target.value))}
-                          style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: `1px solid ${pkg.accent}30`, color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px 8px 24px', fontSize: 14, fontWeight: 700 }} />
+                          style={{ width: '100%', background: 'var(--as3)', border: `1px solid ${pkg.accent}30`, color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px 8px 24px', fontSize: 14, fontWeight: 700 }} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: '#7b88c0' }}>Tokens Given</label>
+                      <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--atm)' }}>Tokens Given</label>
                       <input type="number" min="1" step="1" value={pkg.tokens} onChange={e => pkg.setTokens(Number(e.target.value))}
-                        style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: `1px solid ${pkg.accent}30`, color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 14, fontWeight: 700 }} />
+                        style={{ width: '100%', background: 'var(--as3)', border: `1px solid ${pkg.accent}30`, color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 14, fontWeight: 700 }} />
                     </div>
                   </div>
                 </div>
@@ -478,49 +478,49 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl mb-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(138,43,226,0.2)' }}>
-            <p className="text-sm font-bold mb-1 uppercase tracking-widest" style={{ color: '#c8d0f0' }}>♪ Background Music</p>
-            <p className="text-xs mb-4" style={{ color: '#7b88c0' }}>Paste a YouTube video URL — it will auto-play (muted by default) when members enter their dashboard. Optionally add a name and artist for display.</p>
+          <div className="p-5 rounded-2xl mb-5" style={{ background: 'var(--as1)', border: '1px solid rgba(138,43,226,0.2)' }}>
+            <p className="text-sm font-bold mb-1 uppercase tracking-widest" style={{ color: 'var(--at2)' }}>♪ Background Music</p>
+            <p className="text-xs mb-4" style={{ color: 'var(--atm)' }}>Paste a YouTube video URL — it will auto-play (muted by default) when members enter their dashboard. Optionally add a name and artist for display.</p>
             <div className="flex flex-col gap-3">
               <div>
-                <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: '#7b88c0' }}>YouTube URL</label>
+                <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--atm)' }}>YouTube URL</label>
                 <input
                   type="url"
                   value={musicYoutubeUrl}
                   onChange={e => setMusicYoutubeUrl(e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(138,43,226,0.25)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+                  style={{ width: '100%', background: 'var(--as3)', border: '1px solid rgba(138,43,226,0.25)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: '#7b88c0' }}>Song Name</label>
+                  <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--atm)' }}>Song Name</label>
                   <input
                     type="text"
                     value={musicName}
                     onChange={e => setMusicName(e.target.value)}
                     placeholder="e.g. Never Gonna Give You Up"
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+                    style={{ width: '100%', background: 'var(--as3)', border: '1px solid var(--ab2)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: '#7b88c0' }}>Artist</label>
+                  <label className="block text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--atm)' }}>Artist</label>
                   <input
                     type="text"
                     value={musicArtist}
                     onChange={e => setMusicArtist(e.target.value)}
                     placeholder="e.g. Rick Astley"
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+                    style={{ width: '100%', background: 'var(--as3)', border: '1px solid var(--ab2)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
                   />
                 </div>
               </div>
-              <p className="text-[10px]" style={{ color: '#4a5580' }}>Legacy direct audio URL (GitHub raw link) still works as fallback if YouTube URL is empty.</p>
+              <p className="text-[10px]" style={{ color: 'var(--atf)' }}>Legacy direct audio URL (GitHub raw link) still works as fallback if YouTube URL is empty.</p>
               <input
                 type="url"
                 value={bgMusicUrl}
                 onChange={e => setBgMusicUrl(e.target.value)}
                 placeholder="https://raw.githubusercontent.com/... (fallback audio URL)"
-                style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: '#e8eaf6', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 12 }}
+                style={{ width: '100%', background: 'var(--as2)', border: '1px solid var(--ab)', color: 'var(--at)', outline: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 12 }}
               />
             </div>
           </div>
@@ -529,7 +529,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
           <button onClick={savePricing} disabled={pricingSaving} className="px-6 py-3 rounded-xl text-sm font-bold" style={{ background: 'rgba(255,180,0,0.12)', border: '1px solid rgba(255,180,0,0.3)', color: '#FFB400', cursor: 'pointer' }}>
             {pricingSaving ? 'Saving...' : 'Save All Settings'}
           </button>
-          <p className="mt-3 text-[11px]" style={{ color: '#3a4570' }}>Requires the <code style={{ color: '#00BFFF' }}>site_config</code> table in Supabase to persist changes.</p>
+          <p className="mt-3 text-[11px]" style={{ color: 'var(--atg)' }}>Requires the <code style={{ color: '#00BFFF' }}>site_config</code> table in Supabase to persist changes.</p>
         </div>
       )}
 
@@ -537,12 +537,12 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
       {subTab === 'leaderboard' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[{ title: 'VIP Leaderboard', entries: vipLeaders, color: '#FFB400' }, { title: 'Reseller Leaderboard', entries: resellerLeaders, color: '#00E676' }].map(({ title, entries, color }) => (
-            <div key={title} className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${color}18` }}>
-              <p className="px-5 py-3 text-xs font-bold uppercase tracking-widest" style={{ color, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>{title}</p>
-              {entries.length === 0 ? <p className="px-5 py-6 text-xs" style={{ color: '#3a4570' }}>No data yet</p> : entries.map(e => (
-                <div key={e.user_id} className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                  <span className="text-sm w-6 text-center font-bold" style={{ color: e.rank <= 3 ? color : '#3a4570' }}>#{e.rank}</span>
-                  <span className="flex-1 text-xs truncate" style={{ color: '#7b88c0' }}>{e.email}</span>
+            <div key={title} className="rounded-2xl overflow-hidden" style={{ background: 'var(--as1)', border: `1px solid ${color}18` }}>
+              <p className="px-5 py-3 text-xs font-bold uppercase tracking-widest" style={{ color, borderBottom: '1px solid var(--ab)' }}>{title}</p>
+              {entries.length === 0 ? <p className="px-5 py-6 text-xs" style={{ color: 'var(--atg)' }}>No data yet</p> : entries.map(e => (
+                <div key={e.user_id} className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: '1px solid var(--ab)' }}>
+                  <span className="text-sm w-6 text-center font-bold" style={{ color: e.rank <= 3 ? color : 'var(--atg)' }}>#{e.rank}</span>
+                  <span className="flex-1 text-xs truncate" style={{ color: 'var(--atm)' }}>{e.email}</span>
                   <span className="text-sm font-black" style={{ color, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{e.tokens} <TokenIcon size={12} /></span>
                 </div>
               ))}

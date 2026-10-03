@@ -5,6 +5,18 @@ import type { CustomerTier, CustomerUser, TokenBalance } from './types';
 const BASE = `https://${projectId}.supabase.co`;
 const KEY  = publicAnonKey;
 const CS_KEY = 'cs_session';
+const ACTIVITY_KEY = 'cs_last_activity';
+const INACTIVITY_LIMIT_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+function touchActivity() {
+  localStorage.setItem(ACTIVITY_KEY, Date.now().toString());
+}
+
+function isSessionExpired(): boolean {
+  const raw = localStorage.getItem(ACTIVITY_KEY);
+  if (!raw) return false; // no record = fresh session, don't expire
+  return Date.now() - parseInt(raw, 10) > INACTIVITY_LIMIT_MS;
+}
 
 interface CustomerAuthCtx {
   user: CustomerUser | null;
@@ -64,6 +76,16 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const session = getStoredSession();
     if (!session) { setLoading(false); return; }
+
+    // Auto-logout if session has been inactive for 12+ hours
+    if (isSessionExpired()) {
+      localStorage.removeItem(CS_KEY);
+      localStorage.removeItem(ACTIVITY_KEY);
+      setLoading(false);
+      return;
+    }
+
+    touchActivity();
     fetchTier(session.user.id, session.access_token).then(async tier => {
       setUser({ id: session.user.id, email: session.user.email, tier });
       setLoading(false);
@@ -72,6 +94,32 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
         setTokenBalance(bal);
       }
     });
+
+    // Track user activity to reset the inactivity timer
+    const onActivity = () => touchActivity();
+    window.addEventListener('mousemove', onActivity, { passive: true });
+    window.addEventListener('keydown', onActivity, { passive: true });
+    window.addEventListener('click', onActivity, { passive: true });
+    window.addEventListener('touchstart', onActivity, { passive: true });
+
+    // Check every 5 minutes if the session has expired while the tab is open
+    const interval = setInterval(() => {
+      if (isSessionExpired()) {
+        localStorage.removeItem(CS_KEY);
+        localStorage.removeItem(ACTIVITY_KEY);
+        setUser(null);
+        setTokenBalance(null);
+        window.location.href = '/';
+      }
+    }, 5 * 60 * 1000);
+
+    return () => {
+      window.removeEventListener('mousemove', onActivity);
+      window.removeEventListener('keydown', onActivity);
+      window.removeEventListener('click', onActivity);
+      window.removeEventListener('touchstart', onActivity);
+      clearInterval(interval);
+    };
   }, []);
 
   async function signIn(email: string, password: string): Promise<string | null> {
@@ -84,6 +132,7 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
     if (!res.ok) return json?.error_description ?? json?.msg ?? 'Login failed';
     const session = { access_token: json.access_token, user: { id: json.user.id, email: json.user.email } };
     localStorage.setItem(CS_KEY, JSON.stringify(session));
+    touchActivity();
     const tier = await fetchTier(session.user.id, session.access_token);
     setUser({ id: session.user.id, email: session.user.email, tier });
     if (tier !== 'normal') {
@@ -127,6 +176,7 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
 
   function signOut() {
     localStorage.removeItem(CS_KEY);
+    localStorage.removeItem(ACTIVITY_KEY);
     setUser(null);
     setTokenBalance(null);
   }

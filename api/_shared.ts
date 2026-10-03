@@ -326,6 +326,99 @@ export async function resendOrderEmail(orderId: string): Promise<void> {
   await sendEmail(order, orderItems, deliveries);
 }
 
+// ── Discord Webhook helpers ───────────────────────────────────────────────────
+
+async function getWebhookConfig(): Promise<{ discord_webhook_url: string; low_stock_threshold: number }> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/site_config?key=in.(discord_webhook_url,low_stock_threshold)&select=key,value`, {
+      headers: serviceHeaders(),
+    });
+    if (!res.ok) return { discord_webhook_url: '', low_stock_threshold: 5 };
+    const rows: { key: string; value: unknown }[] = await res.json();
+    const map: Record<string, unknown> = {};
+    for (const r of rows) map[r.key] = r.value;
+    return {
+      discord_webhook_url: typeof map.discord_webhook_url === 'string' ? map.discord_webhook_url : '',
+      low_stock_threshold: typeof map.low_stock_threshold === 'number' ? map.low_stock_threshold : 5,
+    };
+  } catch { return { discord_webhook_url: '', low_stock_threshold: 5 }; }
+}
+
+async function sendDiscordWebhook(webhookUrl: string, embed: Record<string, unknown>): Promise<void> {
+  if (!webhookUrl) return;
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ embeds: [embed] }),
+    });
+  } catch { /* non-critical */ }
+}
+
+export async function notifyPurchase(order: Order, items: OrderItem[], deliveries: AssignedDelivery[]): Promise<void> {
+  const { discord_webhook_url } = await getWebhookConfig();
+  if (!discord_webhook_url) return;
+
+  const fields = items.map(it => ({
+    name: it.product_name,
+    value: `Qty: ${it.quantity} | ₱${it.price}`,
+    inline: true,
+  }));
+
+  await sendDiscordWebhook(discord_webhook_url, {
+    title: '🛒 New Order Received',
+    color: 0x00BFFF,
+    fields: [
+      { name: 'Customer', value: order.customer_email, inline: true },
+      { name: 'Total', value: `₱${order.total}`, inline: true },
+      { name: 'Order ID', value: `\`${order.id.slice(0, 8).toUpperCase()}\``, inline: true },
+      ...fields,
+      { name: 'Deliveries', value: deliveries.length > 0 ? `${deliveries.length} item(s) delivered` : 'Manual / pending', inline: true },
+    ],
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function checkLowStockAndNotify(productId: string, productName: string, remainingStock: number): Promise<void> {
+  const { discord_webhook_url, low_stock_threshold } = await getWebhookConfig();
+  if (!discord_webhook_url || remainingStock > low_stock_threshold) return;
+
+  await sendDiscordWebhook(discord_webhook_url, {
+    title: '⚠️ Low Stock Alert',
+    color: 0xFF8C00,
+    fields: [
+      { name: 'Product', value: productName, inline: true },
+      { name: 'Remaining Stock', value: `${remainingStock}`, inline: true },
+      { name: 'Product ID', value: `\`${productId}\``, inline: true },
+    ],
+    description: `Stock is at or below the low stock threshold (${low_stock_threshold}).`,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function sendHourlyStockReport(): Promise<void> {
+  const { discord_webhook_url } = await getWebhookConfig();
+  if (!discord_webhook_url) return;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=name,stock,product_type&order=stock.asc&limit=20`, {
+      headers: serviceHeaders(),
+    });
+    if (!res.ok) return;
+    const products: { name: string; stock: number; product_type: string }[] = await res.json();
+    if (!products.length) return;
+
+    const lines = products.map(p => `• **${p.name}** — ${p.stock} in stock`).join('\n');
+    await sendDiscordWebhook(discord_webhook_url, {
+      title: '📦 Hourly Stock Report',
+      color: 0x8A2BE2,
+      description: lines || 'No products found.',
+      footer: { text: `Report generated at ${new Date().toUTCString()}` },
+      timestamp: new Date().toISOString(),
+    });
+  } catch { /* non-critical */ }
+}
+
 export async function fulfillOrder(orderId: string): Promise<void> {
   console.log('[FULFILLMENT] Starting fulfillment for order', orderId);
 
@@ -435,6 +528,7 @@ export async function fulfillOrder(orderId: string): Promise<void> {
 
     const newStock = Math.max(0, product.stock - item.quantity);
     await dbUpdate('products', { id: item.product_id }, { stock: newStock, updated_at: new Date().toISOString() });
+    checkLowStockAndNotify(item.product_id, item.product_name, newStock).catch(() => {});
   }
 
   await sendEmail(order, orderItems, deliveries).catch((e) => console.warn('[FULFILLMENT] Email error:', e));
@@ -442,6 +536,7 @@ export async function fulfillOrder(orderId: string): Promise<void> {
   console.log('[FULFILLMENT] Order marked completed');
   console.log('[FULFILLMENT] SUCCESS — order', orderId, '| deliveries:', deliveries.length);
 
-  // Award purchase tokens non-blocking
+  // Non-blocking: award tokens + Discord notification
   awardTokensForOrder(order).catch(e => console.warn('[TOKENS] Award error:', e));
+  notifyPurchase(order, orderItems, deliveries).catch(() => {});
 }

@@ -3,11 +3,11 @@ import { supabase } from '@/lib/supabase';
 import type { Product, ProductCode } from '@/lib/types';
 
 const CSS = `
-  .ci-input { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #e8eaf6; outline: none; border-radius: 8px; padding: 8px 12px; font-size: 13px; transition: border-color 0.2s; font-family: 'Inter', sans-serif; width: 100%; }
+  .ci-input { background: var(--as3); border: 1px solid var(--ab2); color: var(--at); outline: none; border-radius: 8px; padding: 8px 12px; font-size: 13px; transition: border-color 0.2s; font-family: 'Inter', sans-serif; width: 100%; }
   .ci-input:focus { border-color: rgba(0,191,255,0.4); }
   .ci-input::placeholder { color: #2e3a5a; }
   .ci-row { transition: background 0.15s; }
-  .ci-row:hover { background: rgba(255,255,255,0.02); }
+  .ci-row:hover { background: var(--as1); }
 `;
 
 interface Props { products: Product[]; }
@@ -84,14 +84,14 @@ export default function CodeInventoryPanel({ products }: Props) {
 
   return (
     <div className="rounded-2xl overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid var(--ab)' }}>
       <style>{CSS}</style>
 
       {/* Header */}
-      <div className="px-6 py-4 flex items-center justify-between flex-wrap gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="px-6 py-4 flex items-center justify-between flex-wrap gap-3" style={{ borderBottom: '1px solid var(--ab)' }}>
         <div>
           <h2 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>CODE INVENTORY</h2>
-          <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: '#2e3a5a' }}>{available} available · {delivered} delivered</p>
+          <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: 'var(--atg)' }}>{available} available · {delivered} delivered</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Stats pills */}
@@ -117,7 +117,7 @@ export default function CodeInventoryPanel({ products }: Props) {
 
         {/* Product selector */}
         {codeProducts.length === 0 ? (
-          <p className="text-xs text-center py-6" style={{ color: '#2e3a5a' }}>No Digital Code products found. Set a product type to "Digital Code" in the Products tab first.</p>
+          <p className="text-xs text-center py-6" style={{ color: 'var(--atg)' }}>No Digital Code products found. Set a product type to "Digital Code" in the Products tab first.</p>
         ) : (
           <>
             <div className="flex items-center gap-3 flex-wrap">
@@ -129,13 +129,13 @@ export default function CodeInventoryPanel({ products }: Props) {
               </select>
 
               {/* Filter */}
-              <div className="flex gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex gap-1 p-0.5 rounded-lg" style={{ background: 'var(--as2)', border: '1px solid var(--ab)' }}>
                 {(['all', 'available', 'delivered'] as CodeFilter[]).map(f => (
                   <button key={f} onClick={() => setFilter(f)}
                     className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide"
                     style={{
                       background: filter === f ? 'rgba(0,191,255,0.1)' : 'transparent',
-                      color: filter === f ? '#00BFFF' : '#3a4570',
+                      color: filter === f ? '#00BFFF' : 'var(--atg)',
                       border: `1px solid ${filter === f ? 'rgba(0,191,255,0.3)' : 'transparent'}`,
                       cursor: 'pointer',
                     }}>{f}</button>
@@ -169,7 +169,7 @@ export default function CodeInventoryPanel({ products }: Props) {
                   </button>
                   <button onClick={() => setShowBulk(false)}
                     className="px-3 py-2 rounded-lg text-xs"
-                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#3a4570', cursor: 'pointer' }}>
+                    style={{ background: 'transparent', border: '1px solid var(--ab2)', color: 'var(--atg)', cursor: 'pointer' }}>
                     Cancel
                   </button>
                 </div>
@@ -178,27 +178,27 @@ export default function CodeInventoryPanel({ products }: Props) {
 
             {/* Code list */}
             {loading ? (
-              <div className="py-8 text-center text-xs uppercase tracking-widest" style={{ color: '#2e3a5a' }}>Loading...</div>
+              <div className="py-8 text-center text-xs uppercase tracking-widest" style={{ color: 'var(--atg)' }}>Loading...</div>
             ) : filtered.length === 0 ? (
-              <div className="py-8 text-center text-xs" style={{ color: '#2e3a5a' }}>
+              <div className="py-8 text-center text-xs" style={{ color: 'var(--atg)' }}>
                 {filter === 'all' ? 'No codes yet. Add codes above.' : `No ${filter} codes.`}
               </div>
             ) : (
-              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--ab)' }}>
                 {/* Col headers */}
                 <div className="grid px-4 py-2 text-[10px] uppercase tracking-widest"
-                  style={{ gridTemplateColumns: '1fr 90px 1fr 60px', background: 'rgba(255,255,255,0.02)', color: '#2e3a5a' }}>
+                  style={{ gridTemplateColumns: '1fr 90px 1fr 60px', background: 'var(--as1)', color: 'var(--atg)' }}>
                   <span>Code</span><span>Status</span><span>Assigned To</span><span></span>
                 </div>
                 {filtered.map(c => (
                   <div key={c.id} className="ci-row grid px-4 py-3 items-center"
-                    style={{ gridTemplateColumns: '1fr 90px 1fr 60px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                    <span className="text-xs font-mono font-semibold" style={{ color: '#c8d0f0' }}>{c.code}</span>
+                    style={{ gridTemplateColumns: '1fr 90px 1fr 60px', borderTop: '1px solid var(--ab)' }}>
+                    <span className="text-xs font-mono font-semibold" style={{ color: 'var(--at2)' }}>{c.code}</span>
                     <span className="text-[10px] px-2 py-0.5 rounded w-fit font-bold uppercase"
                       style={{ background: `${statusColor(c.status)}12`, color: statusColor(c.status), border: `1px solid ${statusColor(c.status)}30` }}>
                       {c.status}
                     </span>
-                    <span className="text-[10px] truncate" style={{ color: '#3a4570' }}>
+                    <span className="text-[10px] truncate" style={{ color: 'var(--atg)' }}>
                       {c.assigned_to ? c.assigned_to.slice(0, 8).toUpperCase() : '—'}
                     </span>
                     {c.status === 'available' && (

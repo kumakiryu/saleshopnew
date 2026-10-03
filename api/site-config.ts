@@ -9,6 +9,8 @@ const DEFAULTS: Record<string, unknown> = {
   music_name: '',
   music_artist: '',
   music_youtube_url: '',
+  discord_webhook_url: '',
+  low_stock_threshold: 5,
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { isVaultUnlocked, lockVault, unlockVault, vaultMinutesLeft } from '@/lib/vault';
 
 const CSS = `
-  .vg-input { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #e8eaf6; outline: none; border-radius: 10px; font-size: 20px; font-weight: 700; letter-spacing: 0.4em; text-align: center; padding: 12px 16px; width: 100%; font-family: 'Rajdhani','Inter',monospace; transition: border-color 0.2s; }
+  .vg-input { background: var(--ab); border: 1px solid rgba(255,255,255,0.12); color: #e8eaf6; outline: none; border-radius: 10px; font-size: 20px; font-weight: 700; letter-spacing: 0.4em; text-align: center; padding: 12px 16px; width: 100%; font-family: 'Rajdhani','Inter',monospace; transition: border-color 0.2s; }
   .vg-input:focus { border-color: rgba(0,191,255,0.5); box-shadow: 0 0 0 2px rgba(0,191,255,0.08); }
   .vg-input::placeholder { color: #2e3a5a; letter-spacing: 0.3em; }
 `;
@@ -84,7 +84,7 @@ export default function VaultGuard({ totpEnabled, children, onAudit }: Props) {
         </div>
         <div>
           <p className="font-bold text-sm mb-1" style={{ color: '#FF8C00', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.05em' }}>2FA REQUIRED</p>
-          <p className="text-xs" style={{ color: '#3a4570' }}>Enable Two-Factor Authentication in the Settings tab to access this section.</p>
+          <p className="text-xs" style={{ color: 'var(--atg)' }}>Enable Two-Factor Authentication in the Settings tab to access this section.</p>
         </div>
       </div>
     );
@@ -102,8 +102,8 @@ export default function VaultGuard({ totpEnabled, children, onAudit }: Props) {
             </svg>
           </div>
           <div>
-            <p className="font-bold text-lg mb-1" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.08em' }}>VAULT LOCKED</p>
-            <p className="text-xs" style={{ color: '#3a4570' }}>Verify your identity to access this section.</p>
+            <p className="font-bold text-lg mb-1" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.08em' }}>VAULT LOCKED</p>
+            <p className="text-xs" style={{ color: 'var(--atg)' }}>Verify your identity to access this section.</p>
           </div>
           <button onClick={() => setShowModal(true)}
             className="px-8 py-3 rounded-xl font-bold text-sm tracking-wider"
@@ -119,7 +119,7 @@ export default function VaultGuard({ totpEnabled, children, onAudit }: Props) {
               style={{ background: 'linear-gradient(135deg, rgba(15,20,50,0.98) 0%, rgba(8,13,40,0.98) 100%)', border: '1px solid rgba(0,191,255,0.2)', boxShadow: '0 0 60px rgba(0,191,255,0.08)' }}>
 
               {/* Header */}
-              <div className="px-6 pt-6 pb-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="px-6 pt-6 pb-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--ab)' }}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.25)' }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00BFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -127,12 +127,12 @@ export default function VaultGuard({ totpEnabled, children, onAudit }: Props) {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.06em' }}>VERIFY IDENTITY</p>
-                    <p className="text-[10px]" style={{ color: '#2e3a5a' }}>Vault requires 2FA confirmation</p>
+                    <p className="text-sm font-bold" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.06em' }}>VERIFY IDENTITY</p>
+                    <p className="text-[10px]" style={{ color: 'var(--atg)' }}>Vault requires 2FA confirmation</p>
                   </div>
                 </div>
                 <button onClick={() => { setShowModal(false); setCode(''); setError(''); }}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2e3a5a' }}>
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--atg)' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                   </svg>
@@ -140,7 +140,7 @@ export default function VaultGuard({ totpEnabled, children, onAudit }: Props) {
               </div>
 
               <div className="px-6 py-6 flex flex-col gap-4">
-                <p className="text-xs text-center" style={{ color: '#7b88c0' }}>
+                <p className="text-xs text-center" style={{ color: 'var(--atm)' }}>
                   Open your authenticator app and enter the 6-digit code.
                 </p>
 
@@ -155,9 +155,9 @@ export default function VaultGuard({ totpEnabled, children, onAudit }: Props) {
                 <button onClick={verify} disabled={loading || code.length !== 6}
                   className="w-full py-3.5 rounded-xl text-sm font-bold tracking-wider"
                   style={{
-                    background: code.length === 6 && !loading ? 'linear-gradient(135deg, rgba(0,191,255,0.2) 0%, rgba(138,43,226,0.2) 100%)' : 'rgba(255,255,255,0.04)',
+                    background: code.length === 6 && !loading ? 'linear-gradient(135deg, rgba(0,191,255,0.2) 0%, rgba(138,43,226,0.2) 100%)' : 'var(--as3)',
                     border: `1px solid ${code.length === 6 && !loading ? 'rgba(0,191,255,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                    color: code.length === 6 && !loading ? '#ffffff' : '#2e3a5a',
+                    color: code.length === 6 && !loading ? '#ffffff' : 'var(--atg)',
                     cursor: code.length === 6 && !loading ? 'pointer' : 'not-allowed',
                     fontFamily: "'Rajdhani','Inter',sans-serif",
                     letterSpacing: '0.08em',
