@@ -18,7 +18,7 @@ async function toQRDataURL(text: string, size = 240): Promise<string> {
 }
 
 const CSS = `
-  .as-input { background: var(--as3); border: 1px solid var(--ab2); color: var(--at); outline: none; border-radius: 8px; padding: 8px 12px; font-size: 14px; letter-spacing: 0.35em; text-align: center; font-family: 'Rajdhani','Inter',monospace; transition: border-color 0.2s; width: 100%; }
+  .as-input { background: var(--as3); border: 1px solid var(--ab2); color: var(--at); outline: none; border-radius: 8px; padding: 8px 12px; font-size: 14px; letter-spacing: 0.35em; text-align: center; font-family: 'JetBrains Mono','Inter',monospace; transition: border-color 0.2s; width: 100%; }
   .as-input:focus { border-color: rgba(0,191,255,0.4); }
   .as-input::placeholder { color: #2e3a5a; }
 `;
@@ -182,7 +182,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{adminEmail}</p>
+          <p className="text-sm font-semibold truncate" style={{ color: 'var(--at2)', fontFamily: "'Exo 2','Inter',sans-serif" }}>{adminEmail}</p>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase"
               style={{ background: `${rc}12`, color: rc, border: `1px solid ${rc}30` }}>{role}</span>
@@ -197,7 +197,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
       <div className="rounded-2xl overflow-hidden"
         style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid var(--ab)' }}>
         <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--ab)' }}>
-          <h3 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>TWO-FACTOR AUTHENTICATION</h3>
+          <h3 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Exo 2','Inter',sans-serif" }}>TWO-FACTOR AUTHENTICATION</h3>
           <p className="text-[10px] mt-0.5" style={{ color: 'var(--atg)' }}>Required to access Code and Account Inventory</p>
         </div>
 
@@ -224,7 +224,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
                     </p>
                     <button onClick={startSetup} disabled={loading}
                       className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide"
-                      style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.15) 0%, rgba(138,43,226,0.15) 100%)', border: '1px solid rgba(0,191,255,0.35)', color: '#ffffff', cursor: 'pointer', fontFamily: "'Rajdhani','Inter',sans-serif", opacity: loading ? 0.5 : 1 }}>
+                      style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.15) 0%, rgba(138,43,226,0.15) 100%)', border: '1px solid rgba(0,191,255,0.35)', color: '#ffffff', cursor: 'pointer', fontFamily: "'Exo 2','Inter',sans-serif", opacity: loading ? 0.5 : 1 }}>
                       {loading ? 'Generating...' : 'Enable 2FA'}
                     </button>
                   </div>
@@ -256,7 +256,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
                   </div>
                   <button onClick={() => setSetupStep('confirm')}
                     className="w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide"
-                    style={{ background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.3)', color: '#00BFFF', cursor: 'pointer', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+                    style={{ background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.3)', color: '#00BFFF', cursor: 'pointer', fontFamily: "'Exo 2','Inter',sans-serif" }}>
                     I've Added It — Enter Code →
                   </button>
                 </div>
@@ -275,7 +275,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
                       border: `1px solid ${code.length === 6 ? 'rgba(0,191,255,0.4)' : 'rgba(255,255,255,0.08)'}`,
                       color: code.length === 6 ? '#ffffff' : 'var(--atg)',
                       cursor: code.length === 6 ? 'pointer' : 'not-allowed',
-                      fontFamily: "'Rajdhani','Inter',sans-serif", opacity: loading ? 0.5 : 1,
+                      fontFamily: "'Exo 2','Inter',sans-serif", opacity: loading ? 0.5 : 1,
                     }}>
                     {loading ? 'Verifying...' : 'Activate 2FA'}
                   </button>
@@ -339,11 +339,11 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
       {totpEnabled && (
         <div className="rounded-2xl p-5"
           style={{ background: 'rgba(255,68,68,0.04)', border: '1px solid rgba(255,68,68,0.15)' }}>
-          <h3 className="font-bold tracking-widest text-sm mb-2" style={{ color: '#FF6B6B', fontFamily: "'Rajdhani','Inter',sans-serif" }}>EMERGENCY LOCKDOWN</h3>
+          <h3 className="font-bold tracking-widest text-sm mb-2" style={{ color: '#FF6B6B', fontFamily: "'Exo 2','Inter',sans-serif" }}>EMERGENCY LOCKDOWN</h3>
           <p className="text-xs mb-3" style={{ color: 'var(--atg)' }}>Immediately terminates all vault sessions and requires fresh 2FA authentication.</p>
           <button onClick={() => { lockVault(); setSuccess('Vault locked. All sessions terminated.'); }}
             className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide"
-            style={{ background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)', color: '#FF6B6B', cursor: 'pointer', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+            style={{ background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)', color: '#FF6B6B', cursor: 'pointer', fontFamily: "'Exo 2','Inter',sans-serif" }}>
             Lock Vault Now
           </button>
         </div>
@@ -354,7 +354,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
         <div className="rounded-2xl overflow-hidden"
           style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid rgba(247,147,26,0.2)' }}>
           <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--ab)' }}>
-            <h3 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>ADMIN MANAGEMENT</h3>
+            <h3 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Exo 2','Inter',sans-serif" }}>ADMIN MANAGEMENT</h3>
             <p className="text-[10px] mt-0.5" style={{ color: 'var(--atg)' }}>Visible to owners only — change roles for any admin</p>
           </div>
           <div className="px-5 py-4">
@@ -399,7 +399,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
                             padding: '4px 8px',
                             fontSize: '11px',
                             fontWeight: 700,
-                            fontFamily: "'Rajdhani','Inter',sans-serif",
+                            fontFamily: "'Exo 2','Inter',sans-serif",
                             cursor: 'pointer',
                             outline: 'none',
                             opacity: roleChanging === a.id ? 0.5 : 1,
@@ -427,7 +427,7 @@ export default function AdminSettingsPanel({ adminId, adminEmail, totpEnabled, r
       <div className="rounded-2xl overflow-hidden"
         style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid var(--ab)' }}>
         <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--ab)' }}>
-          <h3 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>RECENT SECURITY ACTIVITY</h3>
+          <h3 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Exo 2','Inter',sans-serif" }}>RECENT SECURITY ACTIVITY</h3>
         </div>
         <div className="px-5 py-3">
           {logsLoading ? (

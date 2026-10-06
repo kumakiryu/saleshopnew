@@ -16,7 +16,7 @@ const TIER_BG: Record<CustomerTier, string> = {
   normal: 'rgba(123,136,192,0.1)', vip: 'rgba(255,180,0,0.12)', reseller: 'rgba(0,230,118,0.1)',
 };
 const TIER_LABEL: Record<CustomerTier, string> = {
-  normal: 'Normal', vip: '✦ VIP', reseller: '◆ Reseller',
+  normal: 'Normal', vip: '★ VIP', reseller: '◆ Reseller',
 };
 
 const INPUT_STYLE: React.CSSProperties = {
@@ -187,7 +187,7 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
       {mode === 'create' && (
         <div className="p-5 rounded-2xl flex flex-col gap-4" style={{ background: 'var(--as2)', border: '1px solid rgba(0,191,255,0.15)' }}>
           <div>
-            <p className="text-sm font-bold mb-0.5" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani','Inter',sans-serif" }}>Create Customer Account</p>
+            <p className="text-sm font-bold mb-0.5" style={{ color: 'var(--at2)', fontFamily: "'Exo 2','Inter',sans-serif" }}>Create Customer Account</p>
             <p className="text-xs" style={{ color: 'var(--atg)' }}>Creates a new login for the customer and assigns their tier immediately.</p>
           </div>
           {createError && <div className="px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(255,68,68,0.1)', color: '#FF6B6B', border: '1px solid rgba(255,68,68,0.2)' }}>{createError}</div>}
@@ -221,7 +221,7 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
             background: createLoading ? 'rgba(0,191,255,0.05)' : 'linear-gradient(135deg,rgba(0,191,255,0.18),rgba(138,43,226,0.18))',
             border: '1px solid rgba(0,191,255,0.35)', color: createLoading ? 'var(--atg)' : '#fff',
             padding: '11px 24px', borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: createLoading ? 'not-allowed' : 'pointer',
-            fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.06em', alignSelf: 'flex-start',
+            fontFamily: "'Exo 2','Inter',sans-serif", letterSpacing: '0.06em', alignSelf: 'flex-start',
           }}>
             {createLoading ? 'Creating...' : 'Create Account'}
           </button>
@@ -232,7 +232,7 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
       {mode === 'assign' && (
         <div className="p-5 rounded-2xl flex flex-col gap-4" style={{ background: 'var(--as2)', border: '1px solid var(--ab)' }}>
           <div>
-            <p className="text-sm font-bold mb-0.5" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani','Inter',sans-serif" }}>Assign Tier to Existing Account</p>
+            <p className="text-sm font-bold mb-0.5" style={{ color: 'var(--at2)', fontFamily: "'Exo 2','Inter',sans-serif" }}>Assign Tier to Existing Account</p>
             <p className="text-xs" style={{ color: 'var(--atg)' }}>Looks up an existing customer and changes their membership tier.</p>
           </div>
           {addError && <div className="px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(255,68,68,0.1)', color: '#FF6B6B', border: '1px solid rgba(255,68,68,0.2)' }}>{addError}</div>}
@@ -349,7 +349,7 @@ export default function MembersPanel({ adminId }: { adminId: string }) {
             onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.08em' }}>SET NEW PASSWORD</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: "'Exo 2','Inter',sans-serif", letterSpacing: '0.08em' }}>SET NEW PASSWORD</p>
                 <p style={{ fontSize: 11, color: 'var(--atm)', marginTop: 2 }}>{pwModal.email}</p>
               </div>
               <button onClick={() => setPwModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--atg)', fontSize: 18, lineHeight: 1 }}>✕</button>

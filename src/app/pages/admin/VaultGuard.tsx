@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { isVaultUnlocked, lockVault, unlockVault, vaultMinutesLeft } from '@/lib/vault';
 
 const CSS = `
-  .vg-input { background: var(--ab); border: 1px solid rgba(255,255,255,0.12); color: #e8eaf6; outline: none; border-radius: 10px; font-size: 20px; font-weight: 700; letter-spacing: 0.4em; text-align: center; padding: 12px 16px; width: 100%; font-family: 'Rajdhani','Inter',monospace; transition: border-color 0.2s; }
+  .vg-input { background: var(--ab); border: 1px solid rgba(255,255,255,0.12); color: #e8eaf6; outline: none; border-radius: 10px; font-size: 20px; font-weight: 700; letter-spacing: 0.4em; text-align: center; padding: 12px 16px; width: 100%; font-family: 'JetBrains Mono','Inter',monospace; transition: border-color 0.2s; }
   .vg-input:focus { border-color: rgba(0,191,255,0.5); box-shadow: 0 0 0 2px rgba(0,191,255,0.08); }
   .vg-input::placeholder { color: #2e3a5a; letter-spacing: 0.3em; }
 `;
@@ -83,7 +83,7 @@ export default function VaultGuard({ totpEnabled, children, onAudit }: Props) {
           </svg>
         </div>
         <div>
-          <p className="font-bold text-sm mb-1" style={{ color: '#FF8C00', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.05em' }}>2FA REQUIRED</p>
+          <p className="font-bold text-sm mb-1" style={{ color: '#FF8C00', fontFamily: "'Exo 2','Inter',sans-serif", letterSpacing: '0.05em' }}>2FA REQUIRED</p>
           <p className="text-xs" style={{ color: 'var(--atg)' }}>Enable Two-Factor Authentication in the Settings tab to access this section.</p>
         </div>
       </div>
@@ -102,12 +102,12 @@ export default function VaultGuard({ totpEnabled, children, onAudit }: Props) {
             </svg>
           </div>
           <div>
-            <p className="font-bold text-lg mb-1" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.08em' }}>VAULT LOCKED</p>
+            <p className="font-bold text-lg mb-1" style={{ color: 'var(--at2)', fontFamily: "'Exo 2','Inter',sans-serif", letterSpacing: '0.08em' }}>VAULT LOCKED</p>
             <p className="text-xs" style={{ color: 'var(--atg)' }}>Verify your identity to access this section.</p>
           </div>
           <button onClick={() => setShowModal(true)}
             className="px-8 py-3 rounded-xl font-bold text-sm tracking-wider"
-            style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.18) 0%, rgba(138,43,226,0.18) 100%)', border: '1px solid rgba(0,191,255,0.4)', color: '#ffffff', cursor: 'pointer', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.08em', boxShadow: '0 0 20px rgba(0,191,255,0.1)' }}>
+            style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.18) 0%, rgba(138,43,226,0.18) 100%)', border: '1px solid rgba(0,191,255,0.4)', color: '#ffffff', cursor: 'pointer', fontFamily: "'Exo 2','Inter',sans-serif", letterSpacing: '0.08em', boxShadow: '0 0 20px rgba(0,191,255,0.1)' }}>
             Verify Identity
           </button>
         </div>
@@ -127,7 +127,7 @@ export default function VaultGuard({ totpEnabled, children, onAudit }: Props) {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-bold" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.06em' }}>VERIFY IDENTITY</p>
+                    <p className="text-sm font-bold" style={{ color: 'var(--at2)', fontFamily: "'Exo 2','Inter',sans-serif", letterSpacing: '0.06em' }}>VERIFY IDENTITY</p>
                     <p className="text-[10px]" style={{ color: 'var(--atg)' }}>Vault requires 2FA confirmation</p>
                   </div>
                 </div>
@@ -159,7 +159,7 @@ export default function VaultGuard({ totpEnabled, children, onAudit }: Props) {
                     border: `1px solid ${code.length === 6 && !loading ? 'rgba(0,191,255,0.4)' : 'rgba(255,255,255,0.08)'}`,
                     color: code.length === 6 && !loading ? '#ffffff' : 'var(--atg)',
                     cursor: code.length === 6 && !loading ? 'pointer' : 'not-allowed',
-                    fontFamily: "'Rajdhani','Inter',sans-serif",
+                    fontFamily: "'Exo 2','Inter',sans-serif",
                     letterSpacing: '0.08em',
                     transition: 'all 0.2s',
                   }}>

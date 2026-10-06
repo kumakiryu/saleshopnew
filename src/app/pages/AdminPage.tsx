@@ -65,10 +65,10 @@ const ADMIN_CSS = `
     transition: all 0.15s;
   }
   .a-stock-plus:hover:not(:disabled) { background: rgba(0,191,255,0.16); }
-  .nav-item { display:flex; align-items:center; gap:9px; padding:8px 13px; border-radius:9px; margin:1px 8px; font-size:12.5px; font-weight:500; color:var(--nav-text); cursor:pointer; transition:all 0.18s; background:transparent; border:1px solid transparent; text-align:left; width:calc(100% - 16px); }
-  .nav-item:hover { background:var(--nav-hover); color:var(--nav-text-hover); border-color:rgba(0,0,0,0.05); }
-  .nav-item.active { background:linear-gradient(135deg,rgba(0,191,255,0.13) 0%,rgba(0,191,255,0.06) 100%); color:var(--nav-active-text); border-color:rgba(0,191,255,0.2); box-shadow:0 0 12px rgba(0,191,255,0.06); }
-  .nav-section-label { font-size:9px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--nav-section-label); padding:14px 22px 5px; }
+  .nav-item { display:flex; align-items:center; gap:9px; padding:8px 12px 8px 10px; border-radius:9px; margin:1px 8px; font-size:12px; font-weight:500; color:var(--nav-text); cursor:pointer; transition:all 0.18s; background:transparent; border:1px solid transparent; text-align:left; width:calc(100% - 16px); position:relative; }
+  .nav-item:hover { background:var(--nav-hover); color:var(--nav-text-hover); }
+  .nav-item.active { background:linear-gradient(135deg,rgba(0,191,255,0.12) 0%,rgba(0,191,255,0.05) 100%); color:var(--nav-active-text); border-color:rgba(0,191,255,0.18); box-shadow:inset 3px 0 0 #00BFFF, 0 0 16px rgba(0,191,255,0.06); }
+  .nav-section-label { font-size:9px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--nav-section-label); padding:14px 22px 5px; font-family:'Exo 2','Inter',sans-serif; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 `;
 
@@ -110,12 +110,12 @@ const TAB_SUBTITLES: Record<Tab, string> = { dashboard: 'Overview of your store 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex-1 min-w-[120px] p-4 rounded-xl" style={{
-      background: 'linear-gradient(135deg, var(--as3) 0%, var(--as1) 100%)',
-      border: `1px solid ${color}22`,
+      background: `linear-gradient(135deg, ${color}08 0%, transparent 100%)`,
+      border: `1px solid ${color}20`,
       backdropFilter: 'blur(8px)',
     }}>
-      <div className="text-2xl font-bold mb-0.5" style={{ color, fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>{value}</div>
-      <div className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--atg)' }}>{label}</div>
+      <div className="text-[28px] font-bold mb-0.5 leading-none" style={{ color, fontFamily: "'JetBrains Mono', 'Inter', monospace" }}>{value}</div>
+      <div className="text-[10px] uppercase tracking-widest mt-1" style={{ color: 'var(--atg)', fontFamily: "'Exo 2','Inter',sans-serif" }}>{label}</div>
     </div>
   );
 }
@@ -148,20 +148,38 @@ function AdminLogin({ onSuccess }: { onSuccess: (u: AdminUser) => void }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--a-page-bg)' }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#050816', position: 'relative', overflow: 'hidden' }}>
       <style>{ADMIN_CSS}</style>
-      <motion.div className="w-full max-w-sm" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+      <style>{`
+        :root {
+          --at: #e8eaf6; --at2: #c8d0f0; --atm: #7b88c0; --atf: #4a5580; --atg: #3a4570;
+          --as1: rgba(255,255,255,0.02); --as2: rgba(255,255,255,0.03);
+          --as3: rgba(255,255,255,0.04); --as4: rgba(255,255,255,0.05);
+          --ab: rgba(255,255,255,0.07); --ab2: rgba(255,255,255,0.10);
+          --a-modal-bg: #080d28; --a-page-bg: #050816;
+        }
+      `}</style>
+      {/* Subtle background orbs */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', width: '60vw', height: '60vw', top: '-20vw', right: '-10vw', background: 'radial-gradient(ellipse, rgba(0,191,255,0.04) 0%, transparent 65%)', filter: 'blur(50px)', borderRadius: '50%' }} />
+        <div style={{ position: 'absolute', width: '50vw', height: '50vw', bottom: '-15vw', left: '-5vw', background: 'radial-gradient(ellipse, rgba(138,43,226,0.05) 0%, transparent 65%)', filter: 'blur(40px)', borderRadius: '50%' }} />
+      </div>
+      <motion.div className="w-full max-w-sm relative z-10" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <div className="w-1 h-7 rounded-full" style={{ background: 'linear-gradient(to bottom, #00BFFF, #8A2BE2)' }} />
-            <span className="text-2xl font-bold tracking-widest" style={{ color: 'var(--at)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>ADMIN</span>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-5" style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.15) 0%, rgba(138,43,226,0.15) 100%)', border: '1px solid rgba(0,191,255,0.25)' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00BFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           </div>
-          <p className="text-xs uppercase tracking-[0.3em]" style={{ color: 'var(--atg)' }}>Sale Shop Control Panel</p>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="w-1 h-6 rounded-full" style={{ background: 'linear-gradient(to bottom, #00BFFF, #8A2BE2)' }} />
+            <span className="text-xl font-bold tracking-[0.15em]" style={{ color: 'var(--at)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>ADMIN</span>
+          </div>
+          <p className="text-[10px] uppercase tracking-[0.3em]" style={{ color: 'var(--atg)', fontFamily: "'Exo 2','Inter',sans-serif" }}>Sale Shop Control Panel</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6 rounded-2xl" style={{
-          background: 'linear-gradient(135deg, var(--as3) 0%, var(--as1) 100%)',
-          border: '1px solid var(--ab)', backdropFilter: 'blur(12px)',
+          background: 'linear-gradient(135deg, var(--as4) 0%, var(--as2) 100%)',
+          border: '1px solid var(--ab)', backdropFilter: 'blur(16px)',
+          boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
         }}>
           {error && <ErrorBox msg={error} />}
 
@@ -180,7 +198,7 @@ function AdminLogin({ onSuccess }: { onSuccess: (u: AdminUser) => void }) {
             style={{
               background: loading ? 'rgba(0,191,255,0.05)' : 'linear-gradient(135deg, rgba(0,191,255,0.18) 0%, rgba(138,43,226,0.18) 100%)',
               border: '1px solid rgba(0,191,255,0.35)', color: loading ? 'var(--atg)' : 'var(--at)',
-              fontFamily: "'Rajdhani', 'Inter', sans-serif", transition: 'all 0.2s',
+              fontFamily: "'Exo 2', 'Inter', sans-serif", transition: 'all 0.2s',
             }}>
             {loading ? 'Verifying...' : 'Sign In'}
           </button>
@@ -281,7 +299,7 @@ function ProductModal({ product, onClose, categories }: ModalProps) {
       >
         {/* header */}
         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--ab)' }}>
-          <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>
+          <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>
             {isEdit ? 'EDIT PRODUCT' : 'ADD PRODUCT'}
           </h2>
           <button onClick={onClose} style={{ color: 'var(--atg)' }}>
@@ -425,7 +443,7 @@ function ProductModal({ product, onClose, categories }: ModalProps) {
             style={{
               background: loading ? 'rgba(0,191,255,0.05)' : 'linear-gradient(135deg, rgba(0,191,255,0.18) 0%, rgba(138,43,226,0.18) 100%)',
               border: '1px solid rgba(0,191,255,0.35)', color: loading ? 'var(--atg)' : 'var(--at)',
-              fontFamily: "'Rajdhani', 'Inter', sans-serif", transition: 'all 0.2s',
+              fontFamily: "'Exo 2', 'Inter', sans-serif", transition: 'all 0.2s',
             }}>
             {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Product'}
           </button>
@@ -499,7 +517,7 @@ function AnnouncementModal({ announcement, onClose, adminName }: AnnModalProps) 
         {/* header */}
         <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--ab)' }}>
           <div className="flex items-center gap-3">
-            <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>
+            <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>
               {isEdit ? 'EDIT ANNOUNCEMENT' : 'NEW ANNOUNCEMENT'}
             </h2>
             {form.pinned && <span className="text-[10px] px-2 py-0.5 rounded" style={{ background: 'rgba(0,191,255,0.1)', color: '#00BFFF' }}>PINNED</span>}
@@ -528,7 +546,7 @@ function AnnouncementModal({ announcement, onClose, adminName }: AnnModalProps) 
                 <span className="inline-flex px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase"
                   style={{ background: cat.bg, color: cat.color, border: `1px solid ${cat.border}` }}>{form.category}</span>
               </div>
-              <h2 className="text-xl font-bold mb-3" style={{ color: 'var(--at)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>
+              <h2 className="text-xl font-bold mb-3" style={{ color: 'var(--at)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>
                 {form.title || <span style={{ color: 'var(--atg)' }}>Untitled</span>}
               </h2>
               <div className="text-sm leading-relaxed" style={{ color: 'var(--atm)' }}
@@ -608,7 +626,7 @@ function AnnouncementModal({ announcement, onClose, adminName }: AnnModalProps) 
             style={{
               background: loading ? 'rgba(0,191,255,0.05)' : 'linear-gradient(135deg, rgba(0,191,255,0.18) 0%, rgba(138,43,226,0.18) 100%)',
               border: '1px solid rgba(0,191,255,0.35)', color: loading ? 'var(--atg)' : 'var(--at)',
-              fontFamily: "'Rajdhani', 'Inter', sans-serif",
+              fontFamily: "'Exo 2', 'Inter', sans-serif",
             }}>
             {loading ? 'Publishing...' : isEdit ? 'Save Changes' : 'Publish'}
           </button>
@@ -665,12 +683,12 @@ function AnnouncementsPanel({ adminEmail }: { adminEmail: string }) {
       {/* header */}
       <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--ab)' }}>
         <div>
-          <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>ANNOUNCEMENTS</h2>
+          <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>ANNOUNCEMENTS</h2>
           <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: 'var(--atg)' }}>{announcements.length} posts • live</p>
         </div>
         <button onClick={() => setModal({ open: true, item: null })}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold tracking-wider uppercase"
-          style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.12) 0%, rgba(138,43,226,0.12) 100%)', border: '1px solid rgba(0,191,255,0.3)', color: '#00BFFF', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>
+          style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.12) 0%, rgba(138,43,226,0.12) 100%)', border: '1px solid rgba(0,191,255,0.3)', color: '#00BFFF', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -699,7 +717,7 @@ function AnnouncementsPanel({ adminEmail }: { adminEmail: string }) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     {a.pinned && <span className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#00BFFF' }} />}
-                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>{a.title}</span>
+                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--at2)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>{a.title}</span>
                   </div>
                   {a.created_by && <span className="text-xs" style={{ color: 'var(--atg)' }}>by {a.created_by}</span>}
                 </div>
@@ -991,7 +1009,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
               <IcGrid />
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: th.text, fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>SALE SHOP</div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: th.text, fontFamily: "'Exo 2','Inter',sans-serif", letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>SALE SHOP</div>
               <div style={{ fontSize: 8, color: th.textFaint, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Control Panel</div>
             </div>
           </div>
@@ -1134,7 +1152,16 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
 
         <div style={{ height: 56, flexShrink: 0, background: th.topbarBg, borderBottom: `1px solid ${th.border}`, display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px' }}>
 
-          <div style={{ flex: 1 }} />
+          {/* Mobile hamburger */}
+          <button className="md:hidden" onClick={() => setSidebarOpen(true)} title="Open menu"
+            style={{ background: 'none', border: `1px solid ${th.border}`, cursor: 'pointer', padding: '5px 7px', borderRadius: 8, color: th.textMuted, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+
+          {/* Page title (topbar) */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <span className="hidden sm:block" style={{ fontSize: 13, fontWeight: 700, color: th.text, fontFamily: "'Exo 2','Inter',sans-serif", letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{TAB_TITLES[tab]}</span>
+          </div>
 
           {/* Theme toggle */}
           <button onClick={toggleTheme} title={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
@@ -1198,7 +1225,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '28px 24px 40px' }}>
           <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} style={{ marginBottom: 24 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: th.text, fontFamily: "\'Rajdhani\',\'Inter\',sans-serif", marginBottom: 4 }}>{TAB_TITLES[tab]}</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: th.text, fontFamily: "'Exo 2','Inter',sans-serif", marginBottom: 4 }}>{TAB_TITLES[tab]}</h1>
             <p style={{ fontSize: 13, color: th.textMuted }}>{TAB_SUBTITLES[tab]}</p>
           </motion.div>
 
@@ -1219,7 +1246,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
                     return (
                       <div key={pm} className="flex-1 min-w-[150px] p-4 rounded-xl" style={{ background: 'var(--as1)', border: `1px solid ${pColor}22` }}>
                         <div className="flex items-center gap-2 mb-2"><div className="w-1.5 h-1.5 rounded-full" style={{ background: pColor }} /><span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: pColor }}>{PROVIDER_LABELS[pm]}</span></div>
-                        <p className="text-xl font-bold mb-0.5" style={{ color: 'var(--at)', fontFamily: "'Rajdhani','Inter',sans-serif" }}>&#x20B1;{revenue.toLocaleString()}</p>
+                        <p className="text-xl font-bold mb-0.5" style={{ color: 'var(--at)', fontFamily: "'Exo 2','Inter',sans-serif" }}>&#x20B1;{revenue.toLocaleString()}</p>
                         <p className="text-[10px]" style={{ color: 'var(--atg)' }}>{count} orders &middot; {successRate}% success</p>
                       </div>
                     );
@@ -1236,10 +1263,10 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
                   return (
                     <div key={o.id} className="a-row flex items-center gap-4 px-6 py-3" style={{ borderBottom: '1px solid var(--as2)' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p className="text-sm font-semibold truncate" style={{ color: 'var(--at2)', fontFamily: "\'Rajdhani\',\'Inter\',sans-serif" }}>{o.customer_name}</p>
+                        <p className="text-sm font-semibold truncate" style={{ color: 'var(--at2)', fontFamily: "'Exo 2','Inter',sans-serif" }}>{o.customer_name}</p>
                         <p className="text-[10px]" style={{ color: 'var(--atg)' }}>{o.customer_email}</p>
                       </div>
-                      <span className="text-sm font-bold" style={{ color: 'var(--at)', fontFamily: "'Rajdhani','Inter',sans-serif" }}>&#x20B1;{Number(o.total).toLocaleString()}</span>
+                      <span className="text-sm font-bold" style={{ color: 'var(--at)', fontFamily: "'Exo 2','Inter',sans-serif" }}>&#x20B1;{Number(o.total).toLocaleString()}</span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest" style={{ background: `${dash_sc}18`, color: dash_sc, border: `1px solid ${dash_sc}40` }}>{o.status}</span>
                       <span className="text-xs hidden sm:block" style={{ color: 'var(--atg)' }}>{format(new Date(o.created_at), 'MMM d, h:mm a')}</span>
                     </div>
@@ -1259,13 +1286,13 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
             {/* table header */}
             <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--ab)' }}>
               <div>
-                <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>PRODUCTS</h2>
+                <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>PRODUCTS</h2>
                 <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: 'var(--atg)' }}>{products.length} items • live</p>
               </div>
               <button
                 onClick={() => setModal({ open: true, product: null })}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold tracking-wider uppercase"
-                style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.12) 0%, rgba(138,43,226,0.12) 100%)', border: '1px solid rgba(0,191,255,0.3)', color: '#00BFFF', fontFamily: "'Rajdhani', 'Inter', sans-serif", transition: 'all 0.2s' }}
+                style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.12) 0%, rgba(138,43,226,0.12) 100%)', border: '1px solid rgba(0,191,255,0.3)', color: '#00BFFF', fontFamily: "'Exo 2', 'Inter', sans-serif", transition: 'all 0.2s' }}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -1293,7 +1320,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
 
                     {/* name */}
                     <div className="min-w-0">
-                      <div className="text-sm font-semibold truncate" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>{p.name}</div>
+                      <div className="text-sm font-semibold truncate" style={{ color: 'var(--at2)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>{p.name}</div>
                       {p.description && <div className="text-xs mt-0.5 truncate max-w-xs" style={{ color: 'var(--atg)' }}>{p.description}</div>}
                     </div>
 
@@ -1301,7 +1328,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
                     <div className="text-xs" style={{ color: 'var(--atm)' }}>{p.category ?? '—'}</div>
 
                     {/* price */}
-                    <div className="text-sm font-bold" style={{ color: 'var(--at)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>₱{p.price}</div>
+                    <div className="text-sm font-bold" style={{ color: 'var(--at)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>₱{p.price}</div>
 
                     {/* stock controls */}
                     <div className="flex items-center gap-2">
@@ -1311,7 +1338,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
                         −
                       </button>
                       <span className="w-10 text-center text-sm font-bold tabular-nums"
-                        style={{ color: stockColor(p.stock), fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>
+                        style={{ color: stockColor(p.stock), fontFamily: "'Exo 2', 'Inter', sans-serif" }}>
                         {p.stock}
                       </span>
                       <button onClick={() => adjustStock(p, 1)} disabled={busy[p.id]}
@@ -1344,7 +1371,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
             {/* header */}
             <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--ab)' }}>
               <div>
-                <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>ORDERS</h2>
+                <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>ORDERS</h2>
                 <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: 'var(--atg)' }}>{orders.length} total · live</p>
               </div>
               <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -1358,7 +1385,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
                       border: '1px solid rgba(0,200,150,0.3)',
                       color: checkingPayments ? '#3a4570' : '#00C896',
                       cursor: checkingPayments ? 'not-allowed' : 'pointer',
-                      fontFamily: "'Rajdhani','Inter',sans-serif",
+                      fontFamily: "'Exo 2','Inter',sans-serif",
                       transition: 'all 0.2s',
                     }}>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
@@ -1404,7 +1431,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
 
                       {/* customer */}
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{o.customer_name}</p>
+                        <p className="text-sm font-semibold truncate" style={{ color: 'var(--at2)', fontFamily: "'Exo 2','Inter',sans-serif" }}>{o.customer_name}</p>
                         <p className="text-[10px]" style={{ color: 'var(--atg)' }}>{o.id.slice(0,8).toUpperCase()} · {format(new Date(o.created_at), 'MMM d')}</p>
                       </div>
 
@@ -1412,7 +1439,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
                       <p className="text-xs truncate" style={{ color: 'var(--atg)' }}>{o.customer_email}</p>
 
                       {/* total */}
-                      <p className="text-sm font-bold" style={{ color: 'var(--at)', fontFamily: "'Rajdhani','Inter',sans-serif" }}>₱{Number(o.total).toLocaleString()}</p>
+                      <p className="text-sm font-bold" style={{ color: 'var(--at)', fontFamily: "'Exo 2','Inter',sans-serif" }}>₱{Number(o.total).toLocaleString()}</p>
 
                       {/* status */}
                       <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase"
@@ -1499,8 +1526,8 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
                             {(orderItems[o.id] ?? []).map(item => (
                               <div key={item.id} className="rounded-xl p-3" style={{ background: 'var(--as1)', border: '1px solid var(--as4)' }}>
                                 <div className="flex items-center justify-between mb-1">
-                                  <span className="text-xs font-semibold" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{item.product_name} ×{item.quantity}</span>
-                                  <span className="text-xs font-bold" style={{ color: 'var(--at)', fontFamily: "'Rajdhani','Inter',sans-serif" }}>₱{(item.price * item.quantity).toLocaleString()}</span>
+                                  <span className="text-xs font-semibold" style={{ color: 'var(--at2)', fontFamily: "'Exo 2','Inter',sans-serif" }}>{item.product_name} ×{item.quantity}</span>
+                                  <span className="text-xs font-bold" style={{ color: 'var(--at)', fontFamily: "'Exo 2','Inter',sans-serif" }}>₱{(item.price * item.quantity).toLocaleString()}</span>
                                 </div>
                                 {item.assigned_code && (
                                   <div className="flex items-center gap-2 mt-1.5">
@@ -1577,7 +1604,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
             style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid var(--ab)' }}>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>MEMBERS</h2>
+                <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>MEMBERS</h2>
                 <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: 'var(--atg)' }}>Manage VIP & Reseller accounts</p>
               </div>
             </div>
@@ -1590,7 +1617,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
             style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)', border: '1px solid var(--ab)' }}>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>EMAIL CENTER</h2>
+                <h2 className="font-bold tracking-widest text-sm" style={{ color: 'var(--at)', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>EMAIL CENTER</h2>
                 <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: 'var(--atg)' }}>Delivery monitoring · auto-refreshes every 10s</p>
               </div>
             </div>
@@ -1619,7 +1646,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
               <p className="text-[10px] uppercase tracking-widest font-bold mb-4" style={{ color: '#00BFFF' }}>Site Settings</p>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-bold mb-1" style={{ color: 'var(--at2)', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+                  <p className="text-sm font-bold mb-1" style={{ color: 'var(--at2)', fontFamily: "'Exo 2','Inter',sans-serif" }}>
                     Maintenance Mode
                   </p>
                   <p className="text-xs" style={{ color: 'var(--atg)' }}>
@@ -1637,7 +1664,7 @@ function AdminDashboard({ user, onLogout }: { user: AdminUser; onLogout: () => v
                     borderRadius: 10,
                     fontSize: 12,
                     fontWeight: 700,
-                    fontFamily: "'Rajdhani','Inter',sans-serif",
+                    fontFamily: "'Exo 2','Inter',sans-serif",
                     letterSpacing: '0.06em',
                     cursor: maintenanceLoading ? 'not-allowed' : 'pointer',
                     opacity: maintenanceLoading ? 0.6 : 1,
@@ -1724,7 +1751,7 @@ export default function AdminPage() {
   if (authState === 'denied') return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: 'var(--a-page-bg)' }}>
       <style>{ADMIN_CSS}</style>
-      <div className="text-xl font-bold tracking-widest" style={{ color: '#FF6B6B', fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>ACCESS DENIED</div>
+      <div className="text-xl font-bold tracking-widest" style={{ color: '#FF6B6B', fontFamily: "'Exo 2', 'Inter', sans-serif" }}>ACCESS DENIED</div>
       <div className="text-xs" style={{ color: 'var(--atg)' }}>Your account is not in the admins list.</div>
       <button onClick={handleLogout} className="mt-2 text-xs px-4 py-2 rounded-lg"
         style={{ border: '1px solid rgba(255,68,68,0.25)', color: '#FF6B6B', background: 'transparent' }}>

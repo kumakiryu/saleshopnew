@@ -101,7 +101,7 @@ export default function TopupPage() {
       <div className="relative z-10 max-w-xl mx-auto px-4 sm:px-6 pb-16">
         <div className="text-center mb-8">
           <p className="text-5xl mb-3">⚡</p>
-          <h1 className="text-3xl font-black tracking-wider" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>TOP UP TOKENS</h1>
+          <h1 className="text-3xl font-black tracking-wider" style={{ color: accent, fontFamily: "'Exo 2','Inter',sans-serif" }}>TOP UP TOKENS</h1>
           <p className="text-xs uppercase tracking-widest mt-1" style={{ color: '#3a4570' }}>Add {tokenType} tokens to your wallet</p>
         </div>
 
@@ -114,7 +114,7 @@ export default function TopupPage() {
                 className="p-5 rounded-xl text-left"
                 style={{ background: sel ? `${accent}12` : 'rgba(255,255,255,0.02)', border: `1px solid ${sel ? accent + '50' : 'rgba(255,255,255,0.07)'}`, cursor: 'pointer', position: 'relative', transition: 'all 0.15s' }}>
                 {p.highlight && <span className="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase" style={{ background: `${accent}25`, color: accent }}>Best Value</span>}
-                <p className="text-3xl font-black mb-1" style={{ color: sel ? accent : '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>{p.tokens}</p>
+                <p className="text-3xl font-black mb-1" style={{ color: sel ? accent : '#c8d0f0', fontFamily: "'Exo 2','Inter',sans-serif" }}>{p.tokens}</p>
                 <p className="text-xs flex items-center gap-1 mb-3" style={{ color: sel ? accent + 'aa' : '#3a4570' }}>tokens <TokenIcon size={12} /></p>
                 <p className="text-lg font-bold" style={{ color: sel ? accent : '#7b88c0' }}>₱{p.price}</p>
                 <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: '#3a4570' }}>{p.label}</p>
@@ -149,7 +149,7 @@ export default function TopupPage() {
           </div>
           <div className="flex items-center justify-between pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <span className="text-xs uppercase tracking-widest" style={{ color: '#3a4570' }}>Total</span>
-            <span className="text-xl font-black" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>₱{selectedPkg.price}</span>
+            <span className="text-xl font-black" style={{ color: accent, fontFamily: "'Exo 2','Inter',sans-serif" }}>₱{selectedPkg.price}</span>
           </div>
         </div>
 
@@ -159,7 +159,7 @@ export default function TopupPage() {
           background: loading ? 'rgba(255,255,255,0.04)' : `linear-gradient(135deg, ${accent}25 0%, ${accent}15 100%)`,
           border: `1px solid ${loading ? 'rgba(255,255,255,0.08)' : accent + '40'}`,
           color: loading ? '#3a4570' : accent,
-          fontFamily: "'Rajdhani','Inter',sans-serif",
+          fontFamily: "'Exo 2','Inter',sans-serif",
           cursor: loading ? 'not-allowed' : 'pointer',
         }}>
           {loading ? 'Processing...' : `BUY ${selectedPkg.tokens} TOKENS — ₱${selectedPkg.price}`}

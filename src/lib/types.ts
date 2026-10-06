@@ -122,6 +122,8 @@ export interface TokenBalance {
   lifetimeEarned: number;
   lifetimeSpent: number;
   bgMusicUrl: string;
+  musicName: string;
+  musicArtist: string;
 }
 
 export interface TokenTransaction {

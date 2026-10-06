@@ -124,7 +124,7 @@ export default function AccountInventoryPanel({ products }: Props) {
       {/* Header */}
       <div className="px-6 py-4 flex items-center justify-between flex-wrap gap-3" style={{ borderBottom: '1px solid var(--ab)' }}>
         <div>
-          <h2 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>ACCOUNT INVENTORY</h2>
+          <h2 className="font-bold tracking-widest text-sm" style={{ color: '#ffffff', fontFamily: "'Exo 2','Inter',sans-serif" }}>ACCOUNT INVENTORY</h2>
           <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: 'var(--atg)' }}>{available} available · {delivered} delivered · {accounts.length} total</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">

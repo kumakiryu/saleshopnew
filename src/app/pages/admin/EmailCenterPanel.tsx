@@ -86,7 +86,7 @@ export default function EmailCenterPanel() {
             background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)',
             border: `1px solid ${s.color}22`,
           }}>
-            <div className="text-2xl font-black mb-0.5" style={{ color: s.color, fontFamily: "'Rajdhani', 'Inter', sans-serif" }}>{s.value}</div>
+            <div className="text-2xl font-black mb-0.5" style={{ color: s.color, fontFamily: "'Exo 2', 'Inter', sans-serif" }}>{s.value}</div>
             <div className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--atg)' }}>{s.label}</div>
           </div>
         ))}

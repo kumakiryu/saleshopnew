@@ -442,6 +442,7 @@ export async function fulfillOrder(orderId: string): Promise<void> {
         await dbUpdate('orders', { id: orderId }, { status: 'delivered', updated_at: new Date().toISOString() });
         await awardTokenTopup(parsed.userId, parsed.tokenType as 'vip' | 'reseller', Number(parsed.tokenAmount), orderId);
         console.log('[FULFILLMENT] Token top-up fulfilled');
+        notifyPurchase(order, [], []).catch(() => {});
         return;
       }
     } catch { /* not JSON or not a topup */ }

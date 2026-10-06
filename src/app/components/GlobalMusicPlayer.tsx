@@ -11,47 +11,33 @@ const GOLD = '#FFB400';
 const GREEN = '#00E676';
 
 export default function GlobalMusicPlayer() {
-  const { user } = useCustomerAuth();
+  const { user, tokenBalance } = useCustomerAuth();
   const { pathname } = useLocation();
 
-  const isMemberRoute = pathname.startsWith('/vip/') || pathname.startsWith('/reseller/');
+  const isMemberRoute = pathname.startsWith('/vip') || pathname.startsWith('/reseller');
   const isReseller = pathname.startsWith('/reseller');
   const accent = isReseller ? GREEN : GOLD;
 
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [musicSrc, setMusicSrc] = useState('');
-  const [musicName, setMusicName] = useState('');
-  const [musicArtist, setMusicArtist] = useState('');
-  const [musicLoaded, setMusicLoaded] = useState(false);
+  const playedSrcRef = useRef('');
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [musicMuted, setMusicMuted] = useState(true);
   const [musicVolume, setMusicVolume] = useState(0.5);
   const [musicMinimized, setMusicMinimized] = useState(false);
   const [musicNeedsClick, setMusicNeedsClick] = useState(false);
 
-  // Load music config once when user logs in as member
-  useEffect(() => {
-    if (!user || user.tier === 'normal') return;
-    if (musicLoaded) return;
-    const session = (() => { try { const r = localStorage.getItem('cs_session'); return r ? JSON.parse(r) : null; } catch { return null; } })();
-    if (!session?.access_token) { setMusicLoaded(true); return; }
-    fetch(`/api/get-tokens?_t=${Date.now()}`, { cache: 'no-store', headers: { Authorization: `Bearer ${session.access_token}` } })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (!d) { setMusicLoaded(true); return; }
-        const raw = typeof d.bg_music_url === 'string' ? toRawGithubUrl(d.bg_music_url.trim()) : '';
-        setMusicSrc(raw);
-        setMusicName(d.music_name ?? '');
-        setMusicArtist(d.music_artist ?? '');
-        setMusicLoaded(true);
-      })
-      .catch(() => setMusicLoaded(true));
-  }, [user]);
+  // Derive music data directly from tokenBalance — no separate fetch needed
+  const rawUrl = tokenBalance?.bgMusicUrl ?? '';
+  const musicSrc = rawUrl ? toRawGithubUrl(rawUrl.trim()) : '';
+  const musicName = tokenBalance?.musicName ?? '';
+  const musicArtist = tokenBalance?.musicArtist ?? '';
+  const hasMusic = !!musicSrc && !!user && user.tier !== 'normal';
 
-  // Auto-play when src is available
+  // Auto-play when a NEW src becomes available (tracks played src via ref, not state)
   useEffect(() => {
     const el = audioRef.current;
-    if (!el || !musicSrc) return;
+    if (!el || !musicSrc || playedSrcRef.current === musicSrc) return;
+    playedSrcRef.current = musicSrc;
     el.volume = musicVolume;
     el.muted = false;
     el.play()
@@ -88,8 +74,7 @@ export default function GlobalMusicPlayer() {
     setMusicNeedsClick(false);
   }
 
-  const hasMusic = !!musicSrc;
-  const showPlayer = isMemberRoute && musicLoaded && hasMusic;
+  const showPlayer = isMemberRoute && hasMusic;
 
   return (
     <>

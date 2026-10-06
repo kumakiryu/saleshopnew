@@ -252,7 +252,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
               { label: 'Active Members', value: members.length, color: '#8A2BE2' },
             ].map(s => (
               <div key={s.label} className="p-4 rounded-xl" style={{ background: 'var(--as2)', border: `1px solid ${s.color}20` }}>
-                <p className="text-2xl font-black mb-0.5" style={{ color: s.color, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{s.value}</p>
+                <p className="text-2xl font-black mb-0.5" style={{ color: s.color, fontFamily: "'Exo 2','Inter',sans-serif" }}>{s.value}</p>
                 <p className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--atg)' }}>{s.label}</p>
               </div>
             ))}
@@ -543,7 +543,7 @@ export default function TokenEconomyPanel({ adminToken }: Props) {
                 <div key={e.user_id} className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: '1px solid var(--ab)' }}>
                   <span className="text-sm w-6 text-center font-bold" style={{ color: e.rank <= 3 ? color : 'var(--atg)' }}>#{e.rank}</span>
                   <span className="flex-1 text-xs truncate" style={{ color: 'var(--atm)' }}>{e.email}</span>
-                  <span className="text-sm font-black" style={{ color, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{e.tokens} <TokenIcon size={12} /></span>
+                  <span className="text-sm font-black" style={{ color, fontFamily: "'Exo 2','Inter',sans-serif" }}>{e.tokens} <TokenIcon size={12} /></span>
                 </div>
               ))}
             </div>

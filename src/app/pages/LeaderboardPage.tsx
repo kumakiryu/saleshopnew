@@ -49,16 +49,16 @@ export default function LeaderboardPage() {
           </button>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             <div className="flex gap-2">
-              <button onClick={() => navigate('/vip/leaderboard')} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: !isReseller ? 'rgba(255,180,0,0.15)' : 'rgba(255,255,255,0.04)', color: !isReseller ? GOLD : '#7b88c0', border: `1px solid ${!isReseller ? 'rgba(255,180,0,0.3)' : 'rgba(255,255,255,0.08)'}`, cursor: 'pointer' }}>✦ VIP</button>
+              <button onClick={() => navigate('/vip/leaderboard')} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: !isReseller ? 'rgba(255,180,0,0.15)' : 'rgba(255,255,255,0.04)', color: !isReseller ? GOLD : '#7b88c0', border: `1px solid ${!isReseller ? 'rgba(255,180,0,0.3)' : 'rgba(255,255,255,0.08)'}`, cursor: 'pointer' }}>★ VIP</button>
               <button onClick={() => navigate('/reseller/leaderboard')} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: isReseller ? 'rgba(0,230,118,0.15)' : 'rgba(255,255,255,0.04)', color: isReseller ? GREEN : '#7b88c0', border: `1px solid ${isReseller ? 'rgba(0,230,118,0.3)' : 'rgba(255,255,255,0.08)'}`, cursor: 'pointer' }}>◆ RESELLER</button>
             </div>
-            <MemberDropdown isReseller={isReseller} />
+            <MemberDropdown isReseller={user?.tier === 'reseller'} />
           </div>
         </div>
 
         <div className="text-center mb-8">
           <p className="text-5xl mb-3">🏆</p>
-          <h1 className="text-3xl font-black tracking-wider" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+          <h1 className="text-3xl font-black tracking-wider" style={{ color: accent, fontFamily: "'Exo 2','Inter',sans-serif" }}>
             {isReseller ? 'RESELLER' : 'VIP'} LEADERBOARD
           </h1>
           <p className="text-xs uppercase tracking-widest mt-1" style={{ color: '#3a4570' }}>Top 10 by current balance · updates every 30s</p>
@@ -94,7 +94,7 @@ export default function LeaderboardPage() {
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-base font-black" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>{entry.tokens} <TokenIcon size={14} /></p>
+                    <p className="text-base font-black" style={{ color: accent, fontFamily: "'Exo 2','Inter',sans-serif" }}>{entry.tokens} <TokenIcon size={14} /></p>
                   </div>
                 </div>
               );

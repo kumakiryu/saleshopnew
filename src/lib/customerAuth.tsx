@@ -39,12 +39,13 @@ function getStoredSession(): { access_token: string; user: { id: string; email: 
   try { const r = localStorage.getItem(CS_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
 }
 
-async function fetchTier(userId: string, token: string): Promise<CustomerTier> {
+async function fetchTier(userId: string, token: string): Promise<CustomerTier | 'expired'> {
   try {
     const res = await fetch(
       `${BASE}/rest/v1/user_memberships?user_id=eq.${userId}&select=tier&limit=1`,
       { headers: { apikey: KEY, Authorization: `Bearer ${token}` } }
     );
+    if (res.status === 401 || res.status === 403) return 'expired';
     if (!res.ok) return 'normal';
     const rows = await res.json();
     return (rows?.[0]?.tier as CustomerTier) ?? 'normal';
@@ -64,6 +65,8 @@ async function fetchTokenBalance(accessToken: string): Promise<TokenBalance | nu
       lifetimeEarned: d.lifetime_earned ?? 0,
       lifetimeSpent: d.lifetime_spent ?? 0,
       bgMusicUrl: d.bg_music_url ?? '',
+      musicName: d.music_name ?? '',
+      musicArtist: d.music_artist ?? '',
     };
   } catch { return null; }
 }
@@ -87,6 +90,13 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
 
     touchActivity();
     fetchTier(session.user.id, session.access_token).then(async tier => {
+      if (tier === 'expired') {
+        // JWT expired — clear stale session so user sees clean Sign In
+        localStorage.removeItem(CS_KEY);
+        localStorage.removeItem(ACTIVITY_KEY);
+        setLoading(false);
+        return;
+      }
       setUser({ id: session.user.id, email: session.user.email, tier });
       setLoading(false);
       if (tier !== 'normal') {

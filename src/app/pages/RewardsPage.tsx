@@ -68,7 +68,7 @@ export default function RewardsPage() {
           <div className="w-full max-w-md rounded-2xl p-6" style={{ background: '#13172a', border: `1px solid ${accent}40` }}>
             <div className="text-center mb-5">
               <div className="text-4xl mb-2">🎉</div>
-              <h2 className="text-lg font-black tracking-wider" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>REWARD DELIVERED</h2>
+              <h2 className="text-lg font-black tracking-wider" style={{ color: accent, fontFamily: "'Exo 2','Inter',sans-serif" }}>REWARD DELIVERED</h2>
               <p className="text-xs mt-1" style={{ color: '#7b88c0' }}>{delivery.name}</p>
             </div>
             <div className="p-4 rounded-xl mb-5" style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -95,7 +95,7 @@ export default function RewardsPage() {
 
         <div className="text-center mb-8">
           <p className="text-5xl mb-3">🎁</p>
-          <h1 className="text-3xl font-black tracking-wider" style={{ color: accent, fontFamily: "'Rajdhani','Inter',sans-serif" }}>REWARDS STORE</h1>
+          <h1 className="text-3xl font-black tracking-wider" style={{ color: accent, fontFamily: "'Exo 2','Inter',sans-serif" }}>REWARDS STORE</h1>
           <p className="text-xs uppercase tracking-widest mt-1" style={{ color: '#3a4570' }}>Redeem your tokens for exclusive prizes</p>
         </div>
 

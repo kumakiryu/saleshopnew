@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import type { Order, OrderItem, OrderStatus } from '@/lib/types';
 
-const DISCORD_URL = 'https://discord.gg/2n5UZj56Nk';
+const DISCORD_URL = 'https://discord.gg/saleshop';
 
 function QRImage() {
   const [ok, setOk] = useState(true);
@@ -150,13 +150,13 @@ export default function OrderStatusPage() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
-          <span style={{ fontFamily: "'Rajdhani','Inter',sans-serif", fontWeight: 600 }}>Home</span>
+          <span style={{ fontFamily: "'Exo 2','Inter',sans-serif", fontWeight: 600 }}>Home</span>
         </motion.button>
 
         {/* Header */}
         <motion.div className="mb-8" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-bold" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.05em' }}>
+            <h1 className="text-2xl font-bold" style={{ color: '#c8d0f0', fontFamily: "'Exo 2','Inter',sans-serif", letterSpacing: '0.05em' }}>
               ORDER STATUS
             </h1>
             <span className="text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase tracking-widest"
@@ -258,7 +258,7 @@ export default function OrderStatusPage() {
                 {items.map(i => (
                   <div key={i.id} className="flex items-center justify-between text-xs">
                     <span style={{ color: '#7b88c0' }}>{i.product_name} ×{i.quantity}</span>
-                    <span className="font-bold" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>₱{(i.price * i.quantity).toLocaleString()}</span>
+                    <span className="font-bold" style={{ color: '#ffffff', fontFamily: "'Exo 2','Inter',sans-serif" }}>₱{(i.price * i.quantity).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
@@ -267,7 +267,7 @@ export default function OrderStatusPage() {
             {/* Total */}
             <div className="flex items-center justify-between pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <span className="text-xs uppercase tracking-widest" style={{ color: '#3a4570' }}>Total Paid</span>
-              <span className="text-lg font-bold" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif" }}>₱{Number(order.total).toLocaleString()}</span>
+              <span className="text-lg font-bold" style={{ color: '#ffffff', fontFamily: "'Exo 2','Inter',sans-serif" }}>₱{Number(order.total).toLocaleString()}</span>
             </div>
           </div>
         </motion.div>
@@ -284,7 +284,7 @@ export default function OrderStatusPage() {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00C896" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
                 </svg>
-                <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+                <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Exo 2','Inter',sans-serif" }}>
                   Pay With GCash, Maya, or Bank
                 </p>
               </div>
@@ -304,7 +304,7 @@ export default function OrderStatusPage() {
               <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: '#3a4570' }}>Amount to Send</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold" style={{ color: '#ffffff', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.04em' }}>
+                  <span className="text-2xl font-bold" style={{ color: '#ffffff', fontFamily: "'Exo 2','Inter',sans-serif", letterSpacing: '0.04em' }}>
                     ₱{Number(order.total).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                   </span>
                   <button onClick={() => navigator.clipboard.writeText(Number(order.total).toFixed(2))}
@@ -321,7 +321,7 @@ export default function OrderStatusPage() {
                 <QRImage />
                 <div className="text-center">
                   <p className="text-[9px] uppercase tracking-widest mb-1" style={{ color: '#3a4570' }}>Paying</p>
-                  <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+                  <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Exo 2','Inter',sans-serif" }}>
                     {import.meta.env.VITE_COINSPH_NAME ?? 'Sale Shop'}
                   </p>
                 </div>
@@ -348,7 +348,7 @@ export default function OrderStatusPage() {
 
               <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold w-fit"
-                style={{ background: 'rgba(88,101,242,0.15)', border: '1px solid rgba(88,101,242,0.3)', color: '#7b8ce8', textDecoration: 'none', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+                style={{ background: 'rgba(88,101,242,0.15)', border: '1px solid rgba(88,101,242,0.3)', color: '#7b8ce8', textDecoration: 'none', fontFamily: "'Exo 2','Inter',sans-serif" }}>
                 Message us on Discord →
               </a>
             </div>
@@ -390,7 +390,7 @@ export default function OrderStatusPage() {
             </div>
             <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold"
-              style={{ background: 'rgba(88,101,242,0.15)', border: '1px solid rgba(88,101,242,0.3)', color: '#7b8ce8', textDecoration: 'none', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+              style={{ background: 'rgba(88,101,242,0.15)', border: '1px solid rgba(88,101,242,0.3)', color: '#7b8ce8', textDecoration: 'none', fontFamily: "'Exo 2','Inter',sans-serif" }}>
               Contact on Discord →
             </a>
           </motion.div>
@@ -402,7 +402,7 @@ export default function OrderStatusPage() {
             style={{ background: 'rgba(0,191,255,0.05)', border: '1px solid rgba(0,191,255,0.25)' }}
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
             <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(0,191,255,0.1)' }}>
-              <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+              <p className="text-sm font-bold" style={{ color: '#c8d0f0', fontFamily: "'Exo 2','Inter',sans-serif" }}>
                 {payClicked ? 'Waiting for Payment Confirmation' : 'Complete Your Payment'}
               </p>
               <p className="text-[10px] mt-0.5" style={{ color: '#3a4570' }}>
@@ -416,7 +416,7 @@ export default function OrderStatusPage() {
                 <button
                   onClick={() => { window.open(paymentUrl, '_blank', 'noopener,noreferrer'); setPayClicked(true); }}
                   className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl text-sm font-bold"
-                  style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.18), rgba(0,191,255,0.08))', border: '1px solid rgba(0,191,255,0.45)', color: '#00BFFF', cursor: 'pointer', fontFamily: "'Rajdhani','Inter',sans-serif", letterSpacing: '0.06em' }}>
+                  style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.18), rgba(0,191,255,0.08))', border: '1px solid rgba(0,191,255,0.45)', color: '#00BFFF', cursor: 'pointer', fontFamily: "'Exo 2','Inter',sans-serif", letterSpacing: '0.06em' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
                   </svg>
@@ -459,7 +459,7 @@ export default function OrderStatusPage() {
             </div>
             <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold"
-              style={{ background: 'rgba(88,101,242,0.15)', border: '1px solid rgba(88,101,242,0.3)', color: '#7b8ce8', textDecoration: 'none', fontFamily: "'Rajdhani','Inter',sans-serif" }}>
+              style={{ background: 'rgba(88,101,242,0.15)', border: '1px solid rgba(88,101,242,0.3)', color: '#7b8ce8', textDecoration: 'none', fontFamily: "'Exo 2','Inter',sans-serif" }}>
               Contact on Discord →
             </a>
           </motion.div>

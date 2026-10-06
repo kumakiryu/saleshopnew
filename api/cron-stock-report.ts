@@ -1,11 +1,20 @@
 import type { VercelRequest, VercelResponse } from './_types';
-import { sendHourlyStockReport } from './_shared';
+import { sendHourlyStockReport, verifyAdminToken } from './_shared';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Vercel cron jobs send a GET with Authorization: Bearer <CRON_SECRET>
-  const authHeader = req.headers.authorization ?? '';
+  const authHeader = String(req.headers.authorization ?? '');
   const cronSecret = process.env.CRON_SECRET ?? '';
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+
+  // Allow Vercel cron (Bearer CRON_SECRET) OR an authenticated admin (Bearer <jwt>)
+  const isCron = cronSecret ? authHeader === `Bearer ${cronSecret}` : false;
+  let isAdmin = false;
+  if (!isCron && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+    const check = await verifyAdminToken(token).catch(() => ({ ok: false }));
+    isAdmin = check.ok;
+  }
+
+  if (!isCron && !isAdmin) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
