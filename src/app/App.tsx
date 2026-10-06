@@ -1,5 +1,32 @@
 import { BrowserRouter, Routes, Route } from 'react-router';
+import { useEffect } from 'react';
 import { CustomerAuthProvider } from '@/lib/customerAuth';
+import logoImage from '@/imports/image-1.png';
+
+const TITLES = ['SALE SHOP', 'BUY NOW! 🛒', 'SALE SHOP', 'BEST PRICES! 🔥'];
+
+function TabMeta() {
+  useEffect(() => {
+    // Favicon
+    let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = logoImage;
+
+    // Cycling title
+    let i = 0;
+    document.title = TITLES[0];
+    const id = setInterval(() => {
+      i = (i + 1) % TITLES.length;
+      document.title = TITLES[i];
+    }, 2000);
+    return () => clearInterval(id);
+  }, []);
+  return null;
+}
 import MaintenanceGate from './components/MaintenanceGate';
 import GlobalMusicPlayer from './components/GlobalMusicPlayer';
 import ShopPage from './pages/ShopPage';
@@ -20,6 +47,7 @@ export default function App() {
     <BrowserRouter>
       <CustomerAuthProvider>
         <MaintenanceGate>
+          <TabMeta />
           <GlobalMusicPlayer />
           <Routes>
             <Route path="/" element={<ShopPage />} />
